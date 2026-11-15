@@ -290,7 +290,7 @@ TLT.forEach((grp,gi)=>{
 });
 
 const TABS=[['pts','📁 Пацієнти'],['nihss','NIHSS'],['gcs','ШКГ'],['four','FOUR'],['mrs','mRS'],['guss','GUSS'],['tlt','ТЛТ'],['dec','⚖ Рішення'],['rep','Друк']];
-const SHEETS=[['dec','Клінічне рішення лікаря'],['tlt','Протипоказання до в/в ТЛТ'],['nihss','NIHSS (динаміка)'],['gcsmrs','ШКГ + mRS (динаміка)'],['four','FOUR (при поступленні)'],['guss','GUSS (ковтання)']];
+const SHEETS=[['nihss','NIHSS (динаміка)'],['gcsmrs','ШКГ + mRS (динаміка)'],['four','FOUR (при поступленні)'],['guss','GUSS (ковтання)'],['tlt','Протипоказання до в/в ТЛТ'],['dec','Клінічне рішення лікаря']];
 
 /* =================== стан =================== */
 let lastSavedJSON=null;
@@ -691,6 +691,8 @@ async function buildPDF(sel,scale,q){
   await ensureLibs();
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+  /* підказка для друку: за замовчуванням двосторонній (переворот по довгому краю) */
+  try{ pdf.viewerPreferences({Duplex:'DuplexFlipLongEdge'}); }catch(_){}
   const off=$('offscreen');
   for(let i=0;i<sel.length;i++){
     off.innerHTML=SHEET_FN[sel[i]]();
