@@ -827,7 +827,7 @@ function suggest(){
   else if(s.absY) R.push(['bad','Є абсолютні протипоказання — в/в ТЛТ не проводиться']);
   else if(w===null) R.push(['warn','Оберіть «Часові показники — госпіталізація в межах» на вкладці ТЛТ, щоб оцінити вікно вТЛТ']);
   else if(w===0){ tltOk=true; R.push([s.relY?'warn':'ok', s.relY?`У вікні ≤4,5 год; є відносні протипоказання (${s.relY}) — рішення щодо вТЛТ індивідуально`:'У вікні ≤4,5 год, абсолютних протипоказань немає — в/в тромболізис (альтеплаза 0,9 мг/кг)']); if(nA!==null&&nA<=4) R.push(['warn',`NIHSS ${nA}: вТЛТ — при потенційно інвалідизуючому інсульті (зазвичай NIHSS >4)`]); }
-  else R.push(['warn','Поза «стандартним вікном» вТЛТ (>4,5 год) — лише індивідуально з розширеною нейровізуалізацією']);
+  else R.push(['warn','Поза «стандартним вікном» вТЛТ (>4,5 год)']);
   const PROX=['ВСА','СМА-M1','СМА-M2','ОА','ХА'];
   if(dec.lvo===true&&dec.art&&!PROX.includes(dec.art)){ R.push(['warn','Дистальна оклюзія ('+dec.art.replace('СМА-','СМА ')+') — ЕВТ індивідуально, за рішенням з ендоваскулярним хірургом']); }
   else if(dec.lvo===true){
@@ -867,6 +867,7 @@ function renderDec(){
   </div>
   <div class="sec">4. Протипоказання до тромболізису</div><div class="item">
     <div>З вкладки ТЛТ: <b>${C===true?'ТАК':C===false?'НІ':'не заповнено'}</b></div>
+    <div style="margin-top:4px">Час госпіталізації: ${windowIdx()===null?'<b>не вказано</b> <span class="interp">(«Часові показники» на вкладці ТЛТ)</span>':windowIdx()>0?'<b style="color:var(--warn,#b26a00)">Поза «стандартним вікном» вТЛТ (>4,5 год)</b>':'<b>у межах 4,5 год</b>'}</div>
     ${cl.length?`<ul style="margin:6px 0 0 18px;padding:0;font-size:13.5px">${cl.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
     <button class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px" data-t="tlt">Відкрити протипоказання →</button>
   </div>
@@ -903,7 +904,7 @@ function sheetDec(){
   <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12.5px"><span><b>3.</b> Тяжкість інсульту</span><span>Бал за NIHSS <span style="display:inline-block;min-width:60px;border:1px solid #000;text-align:center;font-weight:700;padding:2px">${nA}</span></span><span>Бал за ASPECTS <span style="display:inline-block;min-width:60px;border:1px solid #000;text-align:center;font-weight:700;padding:2px">${a??''}</span></span></div>
   ${q(4,'Протипоказання до тромболізису',C)}
   <div style="font-size:11.5px;margin-top:4px">Якщо «Так», які саме протипоказання?</div>
-  <div style="font-size:11px;line-height:1.3">${cl.length? cl.map(t=>line(esc(t))).join('') : line('')+line('')}</div>
+  <div style="font-size:11px;line-height:1.3">${(()=>{ const L=cl.map(t=>esc(t)); if(windowIdx()>0) L.push('Поза «стандартним вікном» вТЛТ (&gt;4,5 год)'); return L.length? L.map(t=>line(t)).join('')+(L.length<2?line(''):'') : line('')+line(''); })()}</div>
   ${q(5,'Оклюзія крупних гілок церебральних артерій (за даними КТ-ангіографії)',dec.lvo)}
   ${line(dec.lvo?esc(lvoText()):'')}
   ${q(6,'Ознаки набряку мозку із зміщенням серединних структур (≥5 мм)',dec.edema)}
