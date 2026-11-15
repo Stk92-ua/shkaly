@@ -356,17 +356,19 @@ function tltState(){
   const n=Object.keys(tlt).length, all=n===TLT_FLAT.length;
   let cls='',txt='Відповідайте ТАК / НІ на кожен пункт',sub=`Заповнено ${n} з ${TLT_FLAT.length}`;
   if(absY){cls='bad';txt='Є абсолютні протипоказання ('+absY+') — в/в ТЛТ не проводиться';}
+  else if(tltTime>0){cls='warn';txt='Поза межами терапевтичного вікна вТЛТ (госпіталізація '+TLT_TIME[tltTime]+'; стандартне вікно ≤4,5 год)'+(relY?'; є відносні протипоказання ('+relY+')':all?'; протипоказань не виявлено':'')+'. Рішення про вТЛТ >4,5 год — лише індивідуально за даними розширеної нейровізуалізації (дод. 13, п. 6.1 наказу МОЗ № 1070)';}
   else if(relY){cls='warn';txt='Є відносні протипоказання ('+relY+') — рішення приймається індивідуально';}
   else if(all){cls='ok';txt='Протипоказань не виявлено';}
   if(all) sub='Усі пункти заповнено';
-  return {absY,relY,n,all,cls,txt,sub};
+  const out=!absY&&tltTime>0;
+  return {absY,relY,n,all,cls,txt,sub,out};
 }
 
 /* =================== екрани =================== */
 function badge(k){
   if(DYN.includes(k)){ const c=cur[k]; return answered(k,c)?scoreStr(k,c):''; }
   if(k==='guss'){ const g=gussState(); return g.any?g.total:''; }
-  if(k==='tlt'){ const s=tltState(); return s.n? (s.absY?'✕':s.relY?'!':s.all?'✓':s.n+'/'+TLT_FLAT.length):''; }
+  if(k==='tlt'){ const s=tltState(); return s.n||s.out? (s.absY?'✕':s.out?'⏱':s.relY?'!':s.all?'✓':s.n+'/'+TLT_FLAT.length):''; }
   return '';
 }
 function renderTabs(){
@@ -554,7 +556,7 @@ function sheetTLT(){
   if(tline) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px">${esc(tline)}</td></tr>`;
   if(typeof decisions==='function'&&decisions().tlt&&meta.adm) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px"><b>В/в тромболізис:</b> ${esc(admStr())} (час госпіталізації)</td></tr>`;
   if(al) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px"><b>Альтеплаза:</b> маса ${al.w} кг; загальна доза ${al.total} мг; болюс ${al.bolus} мг; інфузія ${al.inf} мг за 60 хв</td></tr>`;
-  const concl= s.n? s.txt : '';
+  const concl= s.n||s.out? s.txt : '';
   h+=`<tr><td colspan="3" style="padding:6px;font-size:12px"><b>Висновок:</b> ${esc(concl)}</td></tr></table>
   <div class="sign"><div>Лікар (черговий/лікуючий):<span>${esc(meta.doc)}</span></div><div>Підпис:<span></span></div></div></div>`;
   return h;
@@ -587,7 +589,7 @@ function textReport(){
   if(g.any) L.push(`GUSS: ${g.total}/20`+(g.done?` — ${gussInt(g.total)[2]}`:' (не завершено)'));
   const tsx=timeStats(); if(tsx.d2n!==null) L.push(`Двері–голка: ${hm(tsx.d2n)}`+(tsx.d2ct!==null?`; двері–КТ: ${hm(tsx.d2ct)}`:''));
   const s=tltState();
-  if(s.n) L.push(`ТЛТ: ${s.txt}`+(tltTime!==null?`; госпіталізація ${TLT_TIME[tltTime]}`:''));
+  if(s.n||s.out) L.push(`ТЛТ: ${s.txt}`+(tltTime!==null&&!s.out?`; госпіталізація ${TLT_TIME[tltTime]}`:''));
   return `Інсультне відділення\n${pt?'Пацієнт: '+ptLabel()+'\n':''}\n`+(L.length?L.join('\n'):'(нічого не заповнено)');
 }
 
@@ -1006,7 +1008,7 @@ function summaryText(){
   const L=[];
   DYN.forEach(k=>{ const f=filled(k); if(f.length){ const c=f[f.length-1]; L.push(`${SCALES[k].name} ${scoreStr(k,c)}`+(f.length>1?` (${SCALES[k].cols[c]})`:'')); } });
   const g=gussState(); if(g.any) L.push('GUSS '+g.total);
-  const t=tltState(); if(t.n) L.push('ТЛТ: '+(t.absY?'протипоказ.':t.relY?'відн. протипоказ.':t.all?'без протипоказ.':'не завершено'));
+  const t=tltState(); if(t.n||t.out) L.push('ТЛТ: '+(t.absY?'протипоказ.':t.out?'поза вікном':t.relY?'відн. протипоказ.':t.all?'без протипоказ.':'не завершено'));
   return L.join(' · ');
 }
 function serialize(){
