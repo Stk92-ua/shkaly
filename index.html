@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Шкали інсультного відділення</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f5fa8">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7;--card:#fff;--ink:#1c2230;--muted:#6b7385;--line:#e3e6ec;
+  --accent:#1f5fbf;--accent-soft:#e7effb;--warn:#b56a00;--bad:#c0392b;--bad-soft:#fbe9e7;--ok:#2e7d32;--ok-soft:#e6f4ea;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12151b;--card:#1b2029;--ink:#e8ebf1;--muted:#98a0b1;--line:#2b3240;
+  --accent:#7fb0ff;--accent-soft:#22314a;--warn:#f0b24e;--bad:#ff8a80;--bad-soft:#3a2224;--ok:#81c784;--ok-soft:#1f3324;}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.35}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 12px 0;border-bottom:1px solid var(--line)}
+.row{display:flex;gap:8px}
+input[type=text],input[type=datetime-local],input[type=date],select{flex:1;min-width:0;width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:8px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;font:inherit;font-size:14px;font-weight:600;padding:9px 10px;border:0;background:transparent;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--accent);border-color:var(--accent)}
+.tab .b{display:inline-block;min-width:20px;margin-left:4px;padding:1px 6px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:12px}
+main{padding:12px 12px 110px;max-width:820px;margin:0 auto}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.item h3{margin:0 0 2px;font-size:15px}
+.item .hint{color:var(--muted);font-size:13px;margin-bottom:6px}
+.opt{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;font:inherit;font-size:15px;padding:9px 10px;margin-top:5px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer}
+.opt .n{flex:0 0 30px;height:26px;border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt.on .n{background:var(--accent);color:#fff}
+.item.todo{border-left:4px solid var(--warn)}
+.item.off{opacity:.45;pointer-events:none}
+.yn{display:flex;gap:8px;margin-top:6px}
+.yn button{flex:1;font:inherit;font-weight:700;padding:10px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.yn button.on.y{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.yn button.on.n{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.yn.pts button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cols{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:thin}
+.col{flex:0 0 auto;font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
+.col.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.col i{font-style:normal;margin-left:4px;padding:0 5px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:12px}
+.col.on i{background:#fff;color:var(--accent)}
+.colhead{margin:2px 2px 6px;font-size:13px;color:var(--muted)}
+.colhead b{color:var(--ink)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+.bar .in{max-width:820px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.score{font-size:26px;font-weight:800}
+.interp{font-size:13px;color:var(--muted)}
+.btn{font:inherit;font-weight:600;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5}
+.grow{flex:1}
+.sync{font-size:12px;color:var(--muted);margin:5px 2px 0;min-height:15px}
+.sync.ro{color:var(--warn);font-weight:600}
+.prow{display:block;width:100%;text-align:left;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;color:var(--ink);cursor:pointer}
+.prow b{font-size:15px}
+.prow .m{font-size:12.5px;color:var(--muted);margin-top:2px}
+.prow .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:8px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:1px}
+.prow .tag.o{background:var(--bg);color:var(--muted)}
+.prow.cur{border-color:var(--accent)}
+.fill .btn{flex-direction:column;gap:2px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grid .full{grid-column:1/-1}
+.chk{display:block;min-width:0;overflow-wrap:anywhere;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px}
+.fld label{display:block;font-size:12px;color:var(--muted);margin:0 0 3px 2px}
+.note{font-size:13px;color:var(--muted);margin:10px 2px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.sec{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:18px 2px 8px}
+.verdict{border-radius:12px;padding:12px;margin-bottom:10px;font-weight:600;border:1px solid var(--line);background:var(--card)}
+.verdict.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.verdict.warn{border-color:var(--warn);color:var(--warn)}
+.verdict.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.verdict small{display:block;font-weight:400;color:var(--muted);margin-top:3px}
+.pv-wrap{overflow:hidden;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.18);background:#fff;margin-bottom:12px}
+.pv-inner{transform-origin:0 0}
+
+/* ---------- printed sheets (A4 @ 96dpi = 794×1123) ---------- */
+.sheet{width:794px;min-height:1123px;padding:30px 32px;background:#fff;color:#000;font-family:Tinos,"Times New Roman",Times,"Liberation Serif",serif;font-size:11px;line-height:1.18;position:relative}
+.sheet h1{font-size:15px;text-align:center;margin:0 0 6px}
+.sheet h2{font-size:13px;text-align:center;margin:10px 0 4px}
+.sheet table{width:100%;border-collapse:collapse}
+.sheet td,.sheet th{border:1px solid #000;padding:2px 4px;vertical-align:middle}
+.sheet th{font-weight:700;text-align:center}
+.sheet .pinfo{margin-bottom:8px;font-size:11.5px}
+.sheet .pinfo td{padding:4px 6px;vertical-align:top}
+.sheet .crit{font-weight:700;text-align:center;width:88px}
+.sheet .desc{font-size:10.3px;line-height:1.16}
+.sheet .v{width:27px;text-align:center;font-weight:700;font-size:13px;font-family:Arimo,Arial,"Liberation Sans",sans-serif;padding:0}
+.sheet .hv{width:27px;font-size:8.5px;padding:2px 0;line-height:1.05;font-family:Arimo,Arial,"Liberation Sans",sans-serif}
+.sheet .tot td{font-weight:700}
+.sheet .small{font-size:8px;font-weight:400;font-family:Arimo,Arial,"Liberation Sans",sans-serif;line-height:1.05}
+.sheet .leg{font-size:10.5px;margin:4px 0}
+.sheet .sign{display:flex;justify-content:space-between;margin-top:14px;font-size:12px}
+.sheet .sign span{display:inline-block;border-bottom:1px solid #000;min-width:160px;margin-left:6px;padding:0 4px}
+.sheet .box{font-family:Arimo,Arial,"Liberation Sans",sans-serif;font-size:12px}
+.sheet .x{font-family:Arimo,Arial,"Liberation Sans",sans-serif;font-weight:700;font-size:13px;text-align:center}
+.sheet .gt{text-align:center;font-family:Arimo,Arial,"Liberation Sans",sans-serif}
+.sheet .sh{background:#ececec}
+.sheet .foot{position:absolute;left:32px;right:32px;bottom:14px;font-size:8.5px;color:#555;text-align:center}
+.chk input{margin:0 6px 0 0;vertical-align:-2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <input type="text" id="pt" placeholder="Прізвище І.Б." autocomplete="off">
+    <input type="text" id="yr" placeholder="Рік нар." inputmode="numeric" maxlength="4" autocomplete="off" style="flex:0 0 92px">
+    <button class="btn" id="reset" title="Новий пацієнт">↺</button>
+  </div>
+  <div class="row" style="align-items:center;margin-top:6px">
+    <label for="adm" style="font-size:13px;color:var(--muted);white-space:nowrap">Дата госп.:</label>
+    <input type="date" id="adm" style="flex:0 0 138px;padding:6px 6px;font-size:14px">
+    <input type="time" id="admt" title="Час огляду при поступленні (необов’язково)" style="flex:0 0 88px;padding:6px 6px;font-size:14px">
+  </div>
+  <div class="sync" id="sync"></div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main id="main"></main>
+<div class="bar"><div class="in" id="bar"></div></div>
+<div class="toast" id="toast"></div>
+<div id="offscreen" style="position:fixed;left:-20000px;top:0"></div>
+
+<script>
+/* =================== довідники =================== */
+const range=(a,b,f)=>Array.from({length:b-a+1},(_,i)=>f(a+i));
+const H14=['Госп.','6 год','12 год','18 год','24 год',...range(2,10,i=>i+' доба')];
+const HG=['Госп.',...range(1,24,i=>i+' год'),...range(2,10,i=>i+' доба')];
+const HM=range(1,10,i=>i+' доба');
+
+const SCALES={
+  nihss:{name:'NIHSS',full:'National Institutes of Health Stroke Scale – NIHSS',max:42,cols:H14,
+    items:[
+      {id:'1a',t:'1a. Притомність',o:[[0,'ясна свідомість'],[1,'сонливість'],[2,'ступор'],[3,'коматозний стан']]},
+      {id:'1b',t:'1b. Орієнтація',h:'Назвати місяць і вік',o:[[0,'правильно називає місяць і вік із першої спроби'],[1,'одна відповідь правильна, або пацієнту зробили інтубацію, або в пацієнта тяжка дизартрія, або є мовний бар’єр'],[2,'жодна з відповідей не правильна, або в пацієнта афазія, або пацієнт у комі']]},
+      {id:'1c',t:'1c. Виконання команд',o:[[0,'виконує обидві правильно'],[1,'виконує одну'],[2,'не виконує жодної команди або перебуває в комі']]},
+      {id:'2',t:'2. Погляд',o:[[0,'норма'],[1,'частковий периферійний параліч (нерви III, IV, VI) або відхилення, яке пацієнт може подолати'],[2,'стійке відхилення']]},
+      {id:'3',t:'3. Поле зору',o:[[0,'норма'],[1,'квадрантна геміанопсія або згасання'],[2,'повна геміанопсія'],[3,'сліпота']]},
+      {id:'4',t:'4. Рух обличчя',o:[[0,'норма'],[1,'легкий центральний парез, розгладження носо-губної складки'],[2,'виразно виявлений центральний парез або параліч'],[3,'двобічний або периферійний парез чи кома']]},
+      {id:'5a',t:'5a. Утримання лівої руки',o:[[0,'нормальне втримання руки впродовж 10 секунд'],[1,'рука повільно опускається, але не до самого низу'],[2,'рука швидко опускається до самого низу'],[3,'рука падає'],[4,'пацієнт не рухається або в комі']]},
+      {id:'5b',t:'5b. Утримання правої руки',o:[[0,'нормальне втримання руки впродовж 10 секунд'],[1,'рука повільно опускається, але не до самого низу'],[2,'рука швидко опускається до самого низу'],[3,'рука падає'],[4,'пацієнт не рухається або в комі']]},
+      {id:'6a',t:'6a. Утримання лівої ноги',o:[[0,'нормальне втримання ноги впродовж 5 секунд'],[1,'нога повільно опускається, але не до самого низу'],[2,'нога швидко опускається до самого низу'],[3,'нога падає'],[4,'пацієнт не рухається або в комі']]},
+      {id:'6b',t:'6b. Утримання правої ноги',o:[[0,'нормальне втримання ноги впродовж 5 секунд'],[1,'нога повільно опускається, але не до самого низу'],[2,'нога швидко опускається до самого низу'],[3,'нога падає'],[4,'пацієнт не рухається або в комі']]},
+      {id:'7',t:'7. Атаксія',o:[[0,'атаксія відсутня, пацієнт не розуміє, параліч або кома'],[1,'атаксія в одній кінцівці'],[2,'атаксія удвох кінцівках']]},
+      {id:'8',t:'8. Чутливість',o:[[0,'норма'],[1,'помірна втрата чутливості'],[2,'повна втрата чутливості або кома']]},
+      {id:'9',t:'9. Мова',o:[[0,'норма'],[1,'утруднений добір слів, помірна афазія'],[2,'виразно проявлені утруднення мовлення'],[3,'повна афазія, пацієнт німий або в комі']]},
+      {id:'10',t:'10. Дизартрія',o:[[0,'дизартрія відсутня'],[1,'дизартрія, можна добре зрозуміти'],[2,'дизартрія, пацієнта ледь можна зрозуміти, або пацієнт не відповідає чи перебуває в комі']]},
+      {id:'11',t:'11. Згасання',o:[[0,'аномалії відсутні'],[1,'згасання однієї сенсорної модальності або інші ознаки синдрому ігнорування'],[2,'згасання принаймні двох сенсорних модальностей або кома']]}
+    ],
+    interp:s=> s===0?'Неврологічного дефіциту немає': s<=4?'Легкий інсульт': s<=15?'Інсульт середньої тяжкості': s<=20?'Помірно тяжкий інсульт':'Тяжкий інсульт'
+  },
+  gcs:{name:'ШКГ',full:'Шкала ком Глазго',max:15,cols:HG,
+    items:[
+      {id:'E',t:'Розплющування очей (E)',o:[[4,'Довільне'],[3,'На звернену мову'],[2,'На больові подразники'],[1,'Відсутнє']]},
+      {id:'V',t:'Мовна реакція (V)',o:[[5,'Орієнтованість повна'],[4,'Сплутана'],[3,'Незрозумілі слова'],[2,'Нечленороздільні звуки'],[1,'Відсутня'],['T','Інтубований (VT)']]},
+      {id:'M',t:'Рухова реакція (M)',o:[[6,'Виконує команди'],[5,'Цілеспрямована на больовий подразник'],[4,'Нецілеспрямована на больовий подразник'],[3,'Тонічне згинання на больовий подразник'],[2,'Тонічне розгинання на больовий подразник'],[1,'Відсутня']]}
+    ],
+    interp:(s,st)=>(s>=15?'Ясна свідомість': s>=13?'Оглушення': s>=9?'Сопор': s>=4?'Кома':'Термінальна кома')+(st&&st.V==='T'?' (V не оцінено — інтубований)':'')
+  },
+  four:{name:'FOUR',full:'Шкала коми Full Outline UnResponsiveness (FOUR)',max:16,cols:['При поступленні'],
+    items:[
+      {id:'E',t:'1. Реакції очей (E)',o:[[4,'Очі відкриті, стеження та/або миготіння за командою'],[3,'Очі відкриті, але немає стеження'],[2,'Очі закриті, відкриваються на гучний звук, але стеження немає'],[1,'Очі закриті, відкриваються на біль, але стеження немає'],[0,'Очі залишаються закритими у відповідь на біль']]},
+      {id:'M',t:'2. Рухові реакції (M)',o:[[4,'Виконує інструкції (знак відмінно, кулак, знак миру)'],[3,'Локалізує біль'],[2,'Згинальна відповідь на біль'],[1,'Розгинальна відповідь на біль'],[0,'Немає відповіді на біль або генералізований міоклонічний епістатус']]},
+      {id:'B',t:'3. Стовбурові рефлекси (B)',o:[[4,'Зіничний і корнеальний рефлекси збережені'],[3,'Одна зіниця розширена і не реагує на світло'],[2,'Відсутні зіничний або рогівковий рефлекси'],[1,'Відсутні зіничний і рогівковий рефлекси'],[0,'Відсутні зіничний, рогівковий і кашльовий рефлекси']]},
+      {id:'R',t:'4. Дихальний патерн (R)',o:[[4,'Не інтубований, звичайне регулярне дихання'],[3,'Не інтубований, дихання Чейн-Стокса'],[2,'Не інтубований, нерегулярне дихання'],[1,'Чинить опір апарату ШВЛ'],[0,'Повністю синхронний з апаратом ШВЛ або апное']]}
+    ],
+    interp:s=> s>=16?'Ясна свідомість': s===15?'Помірне оглушення': s>=13?'Глибоке оглушення': s>=9?'Сопор': s>=7?'Кома I': s>=1?'Кома II':'Кома III (смерть кори головного мозку)'
+  },
+  mrs:{name:'mRS',full:'Модифікована шкала Ренкіна (Modified Rankin Scale — mRS)',max:6,cols:HM,
+    items:[
+      {id:'mRS',t:'Модифікована шкала Ренкіна',o:[[0,'Відсутність симптомів'],[1,'Відсутність суттєвої функціональної неспроможності, незважаючи на наявність симптомів, здатність до виконання повсякденних обов’язків і буденної активності'],[2,'Легке порушення функціональної спроможності; нездатність до минулої активності, але збережена здатність до обслуговування власних потреб без сторонньої допомоги'],[3,'Помірне порушення функціональної спроможності, необхідність деякої сторонньої допомоги, збережена здатність ходити без сторонньої допомоги'],[4,'Помірно-тяжке порушення функціональної спроможності; нездатність ходити без сторонньої допомоги і самостійно задовольняти фізіологічні потреби'],[5,'Важка функціональна неспроможність; «прикутість» до ліжка, нетримання сечі та калу; потреба в постійному нагляді та увазі'],[6,'Смерть пацієнта']]}
+    ],
+    interp:s=>['Симптомів немає','Немає суттєвої інвалідності','Легка інвалідність','Помірна інвалідність','Помірно тяжка інвалідність','Тяжка інвалідність','Смерть'][s]
+  }
+};
+const DYN=['nihss','gcs','four','mrs'];
+/* індекс останнього стовпчика першої доби (24 год) для кожної шкали; mRS — лише доби */
+const DAY1END={nihss:4,four:4,gcs:24,mrs:0};
+let lastFill=null;
+function fillTo(k,to){
+  const c=cur[k], src=cell(k,c), done=[];
+  for(let i=c+1;i<=to;i++){ if(answered(k,i)) continue; data[k][i]={...src}; done.push(i); }
+  lastFill=done.length?{k,cols:done}:null;
+  const S=SCALES[k];
+  toast(done.length? `Заповнено ${done.length} стовп.: ${S.cols[done[0]]} – ${S.cols[done[done.length-1]]}` : 'Немає порожніх стовпчиків у цьому проміжку');
+}
+function fillBox(k){
+  const S=SCALES[k], c=cur[k], last=S.cols.length-1;
+  if(c>=last) return '';
+  let h=`<div class="item fill"><h3>Бал не змінюється?</h3>`;
+  if(!complete(k,c)){
+    return h+`<div class="hint">Коли заповните всі пункти стовпчика «${S.cols[c]}», його можна буде скопіювати в наступні стовпчики.</div></div>`;
+  }
+  h+=`<div class="hint">Скопіювати «${S.cols[c]}» (${scoreStr(k,c)} б) у наступні <b>порожні</b> стовпчики. Уже заповнені не змінюються.</div><div class="grid">`;
+  if(c<DAY1END[k]) h+=`<button class="btn" data-fill="${DAY1END[k]}">До кінця 1 доби<br><span class="interp">до «${S.cols[DAY1END[k]]}»</span></button>`;
+  h+=`<button class="btn" data-fill="${last}">Весь період<br><span class="interp">до «${S.cols[last]}»</span></button>`;
+  h+=`<select id="fillsel" class="full">${S.cols.map((l,i)=>i>c?`<option value="${i}">до «${l}» включно</option>`:'').join('')}</select>
+    <button class="btn p full" data-fill="sel">Заповнити до обраного</button></div>`;
+  if(lastFill&&lastFill.k===k) h+=`<button class="btn" style="width:100%;margin-top:8px" data-unfill>↶ Скасувати останнє заповнення</button>`;
+  return h+`</div>`;
+}
+
+/* GUSS */
+const G1=[
+  {id:'conc',t:'Концентрація',h:'Пацієнт має залишатися сконцентрованим впродовж 15 хвилин',y:1,n:0},
+  {id:'cough',t:'Кашель та/або очищення горла',h:'Довільний кашель: пацієнт має двічі покашляти або прочистити горло',y:1,n:0},
+  {id:'sal',t:'Ковтання слини: ковтання нормальне',h:'Провести гігієну порожнини рота, якщо вона суха. Якщо пацієнт кашляє під час або після ковтання слини — позначити «Ні»',y:1,n:0},
+  {id:'drool',t:'Слинотеча',h:'Постійна рясна слинотеча',y:0,n:1},
+  {id:'voice',t:'Зміна голосу після ковтання',h:'Хриплий, вологий, осиплий голос з початку інсульту',y:0,n:1}
+];
+const GC=[
+  {id:'semi',t:'Напівтверді',h:'½ чайної ложки води з загусником (IDDSI: рівень 3). Якщо симптомів нема — дати ще 3–5 чайних ложок. Припинити, якщо виявлено один із 4 критеріїв аспірації.'},
+  {id:'liq',t:'Рідкі',h:'Дати 3, 5, 10, 20 мл води в чашці, далі 50 мл (пиття послідовними ковтками). Припинити, якщо виявлено один із 4 критеріїв аспірації.'},
+  {id:'sol',t:'Тверді',h:'Дати шматочок хліба без кірки та/або печива (не більше 1,5×1,5 см). Припинити, якщо виявлено один із 4 критеріїв аспірації.'}
+];
+const G2=[
+  {id:'sw',t:'Проковтування',o:[[0,'Ковтання неможливе'],[1,'Запізніле ковтання (напівтверді, рідкі > 2 с; тверді > 10 с)'],[2,'Ковтання нормальне']]},
+  {id:'cg',t:'Кашель (спонтанний)',h:'До, під час та після ковтання — впродовж 3 хв після тесту',o:[[0,'Так'],[1,'Ні']]},
+  {id:'dr',t:'Слинотеча',o:[[0,'Так'],[1,'Ні']]},
+  {id:'vc',t:'Зміна голосу',h:'Дослухатися до голосу до та після ковтання — пацієнт має казати тільки «О-о-о»',o:[[0,'Так'],[1,'Ні']]}
+];
+const GUSS_INT=[ /* Додаток 21 до Стандарту (наказ МОЗ №1070), рекомендації за IDDSI */
+  [20,20,'Дисфагія легкого ступеня тяжкості або дисфагії не виявлено. Ризик аспірації мінімальний або відсутній',
+   '• Звичайна дієта (рівень 7)\n• Звичайні рідини (рівень 0)\n• Перший прийом їжі під наглядом логопеда або медичної сестри, яка пройшла навчання в сфері дисфагії, щоб оцінити ковтання їжі змішаної консистенції'],
+  [15,19,'Дисфагія легкого ступеня тяжкості з ризиком аспірації',
+   '• Спеціальна дієта при дисфагії (подрібнена та зволожена або м’яка з невеликими шматочками) (рівень 5 або 6)\n• Загущені рідини (рівень 1 або 2)\n• Вода (рівень 0) — лише відповідно до протоколу Frazier Free Water Protocol\n• Опціонально: FEES / VFES; консультація логопеда\n• Рекомендовано годування через ПЕГ, назогастральний зонд або парентеральне + додаткове харчування'],
+  [10,14,'Дисфагія середнього ступеня тяжкості з ризиком розвитку аспірації',
+   '• Пюреподібна їжа (рівень 3–4)\n• Усі рідини загущувати (рівень 2–3)\n• Таблетки подрібнювати та приймати з пюре (рівень 3–4)\n• Виключити рідкі форми лікарських засобів (не давати через рот)\n• Опціонально: FEES / VFES; консультація логопеда\n• Рекомендовано годування через ПЕГ, назогастральний зонд або парентеральне + додаткове харчування'],
+  [0,9,'Дисфагія тяжкого ступеня з високим ризиком розвитку аспірації',
+   '• НЧР (нічого через рот)\n• Опціонально: FEES / VFES; консультація логопеда\n• Рекомендовано годування через ПЕГ, назогастральний зонд або парентеральне харчування']
+];
+
+/* ТЛТ — Додаток 13 до Стандарту, наказ МОЗ №1070 від 20.06.2024 */
+const TLT=[
+  {g:'Абсолютні протипоказання',abs:true,items:[
+    'Будь-який крововилив за даними нейровізуалізації.',
+    'Наявність інтрааксіального (інтрацеребрального) злоякісного новоутворення на момент прийняття рішення.',
+    'Стійка до агресивної антигіпертензивної терапії артеріальна гіпертензія (неможливо досягти або підтримувати цільові цифри АТ <180/105 мм рт. ст.).',
+    'Будь-яка активна кровотеча або будь-який стан, що може збільшити ризик великої кровотечі після проведення вТЛТ.',
+    'Поточне застосування антагоністів вітаміну К та рівень МНВ ≥1,7 або невизначений.',
+    'Поточне застосування ГНММ в лікувальних дозах.',
+    'Наявність дисекції аорти на момент прийняття рішення.',
+    'Наявність інфекційного ендокардиту на момент прийняття рішення.',
+    'Наявність структурного злоякісного новоутворення шлунково-кишкового тракту на момент прийняття рішення.',
+    'Шлунково-кишкова кровотеча у попередні 21 день.'
+  ]},
+  {g:'Відносні протипоказання (рішення приймається індивідуально)',abs:false,sub:[
+    {s:'Анамнестичні',items:[
+      'Внутрішньочерепний крововилив в анамнезі.',
+      ['Ішемічний інсульт або тяжка черепно-мозкова або спінальна травма протягом попередніх 3 міс.','Проведення вТЛТ не протипоказано пацієнтам з перенесеним ішемічним інсультом більше, ніж місяць тому, з невеликим розміром інфаркту або з хорошими показниками клінічного відновлення.'],
+      'Велике хірургічне втручання (наприклад, кардіальне, торакальне, абдомінальне або ортопедичне) у попередні 14 днів. Ступінь ризику залежить від характеру втручання.',
+      'Пункція артерії в місці, де неможливе притискання судини, за попередні 7 днів.',
+      'Інфаркт міокарда з елевацією сегмента ST протягом останніх 7 днів.'
+    ]},
+    {s:'Клінічні',items:[
+      'Симптоми інсульту внаслідок іншого неішемічного гострого неврологічного стану, такого як епілептичний напад із післянападовим паралічем Тодда або вогнищеві неврологічні симптоми внаслідок тяжкої гіпо- або гіперглікемії.',
+      'Поточне (протягом останніх 48 годин) застосування прямого перорального антикоагулянту, який не є антагоністом вітаміну К, і до якого немає препарату зворотної дії в наявності.'
+    ]},
+    {s:'Дані КТ або МРТ',items:[
+      'На КТ ранні ознаки великого інфаркту (>1/3 басейну СМА або оцінка ASPECTS <6 балів).',
+      'На МРТ наявна велика кількість мікрокрововиливів (>10).',
+      'Наявність дисекції інтракраніальних артерій на момент прийняття рішення.'
+    ]},
+    {s:'Лабораторні дослідження',items:[
+      'Концентрація глюкози в крові <2,7 ммоль/л або >22,2 ммоль/л.',
+      'Підвищений показник АЧТЧ.',
+      'Міжнародне нормалізоване відношення >1,7.',
+      'Кількість тромбоцитів <100 000/мм³.'
+    ]}
+  ]}
+];
+const TLT_TIME=['< 4,5 год','4,5 – 6 год','6 – 24 год','> 24 год'];
+/* плоский список пунктів ТЛТ з ідентифікаторами */
+const TLT_FLAT=[];
+TLT.forEach((grp,gi)=>{
+  const push=(it,sub)=>{ const arr=Array.isArray(it)?it:[it,null]; TLT_FLAT.push({id:(grp.abs?'a':'r')+(TLT_FLAT.filter(x=>x.abs===grp.abs).length+1),abs:grp.abs,t:arr[0],note:arr[1],sub}); };
+  if(grp.items) grp.items.forEach(it=>push(it,null));
+  if(grp.sub) grp.sub.forEach(s=>s.items.forEach(it=>push(it,s.s)));
+});
+
+const TABS=[['pts','📁 Пацієнти'],['nihss','NIHSS'],['gcs','ШКГ'],['four','FOUR'],['mrs','mRS'],['guss','GUSS'],['tlt','ТЛТ'],['dec','⚖ Рішення'],['rep','Друк']];
+const SHEETS=[['dec','Клінічне рішення лікаря'],['tlt','Протипоказання до в/в ТЛТ'],['nihss','NIHSS (динаміка)'],['gcsmrs','ШКГ + mRS (динаміка)'],['four','FOUR (при поступленні)'],['guss','GUSS (ковтання)']];
+
+/* =================== стан =================== */
+let lastSavedJSON=null;
+let tm={onset:'',ct:'',needle:'',weight:''};
+const DEC0={basin:'',bside:'',dxExtra:'',dxEdit:null,asp:{mode:'num',val:'',reg:{}},r8auto:false,lvo:null,art:'',aside:'',lvoEdit:null,edema:null,decided:null,dept:'',deptT:'',other:'',docs:[{},{},{}]};
+let dec=JSON.parse(JSON.stringify(DEC0));
+let docNo=''; try{ docNo=localStorage.getItem('docno')||''; }catch(_){}
+let data,ts,cur,guss,gussDT,tlt,tltTime,tltDT,printSel,tab='nihss';
+let meta={adm:'',admT:'',doc:'',year:''};
+let rec={id:null,author:null,created:null,readonly:false};
+try{ meta.doc=localStorage.getItem('doc')||''; }catch(e){}
+function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+function fresh(){
+  data={};ts={};cur={};
+  DYN.forEach(k=>{data[k]={};ts[k]={};cur[k]=0;});
+  guss={p1:{},semi:{},liq:{},sol:{}}; gussDT=''; tm={onset:'',ct:'',needle:'',weight:''};
+  tlt={}; tltTime=null; tltDT='';
+  printSel={}; meta.year=''; meta.admT=''; meta.adm=nowLocal().slice(0,10);
+  rec={id:null,author:null,created:null,readonly:false}; lastSavedJSON=null; dec=JSON.parse(JSON.stringify(DEC0));
+}
+fresh();
+
+const $=id=>document.getElementById(id);
+const num=v=>typeof v==='number'?v:0;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fmtDT(v){ if(!v) return ''; const [d,t]=v.split('T'); const [y,m,dd]=d.split('-'); return `${dd}.${m}.${y}${t?' '+t:''}`; }
+function fmtD(v){ if(!v) return ''; const [y,m,d]=v.slice(0,10).split('-'); return `${d}.${m}.${y}`; }
+function dShort(v){ if(!v||typeof v!=='string'||v.includes('T')) return ''; const [y,m,d]=v.split('-'); return `${d}.${m}<br>${y.slice(2)}`; }
+function todayISO(){ return nowLocal().slice(0,10); }
+function admStr(){ return fmtD(meta.adm)+(meta.admT?' '+meta.admT:''); }
+function admShort(){ if(!meta.adm) return ''; const [y,m,d]=meta.adm.split('-'); return `${d}.${m}`+(meta.admT?'<br>'+meta.admT:''); }
+function stampShort(v){ if(!v||typeof v!=='string') return ''; const [d,t]=v.split('T'); const [y,m,dd]=d.split('-'); return `${dd}.${m}${t?'<br>'+t:''}`; }
+
+/* --- динамічні шкали --- */
+function cell(k,c){ return data[k][c]||{}; }
+function answered(k,c){ return Object.keys(cell(k,c)).length; }
+function total(k,c){ return Object.values(cell(k,c)).reduce((a,v)=>a+num(v),0); }
+function complete(k,c){ return answered(k,c)===SCALES[k].items.length; }
+function scoreStr(k,c){ return (k==='gcs'&&cell(k,c).V==='T')? total(k,c)+'T' : String(total(k,c)); }
+function filled(k){ return Object.keys(data[k]).map(Number).filter(c=>answered(k,c)).sort((a,b)=>a-b); }
+
+/* --- GUSS --- */
+function gSum(p){ return Object.values(guss[p]).reduce((a,v)=>a+v,0); }
+function gDone(p){ return Object.keys(guss[p]).length===(p==='p1'?G1.length:G2.length); }
+function gussState(){
+  const parts=['p1','semi','liq','sol']; let total=0, stop=null, open={p1:true}, done=false;
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i]; if(!open[p]) break;
+    total+=gSum(p);
+    if(!gDone(p)) break;
+    if(gSum(p)<5){ stop=p; done=true; break; }
+    if(i<parts.length-1) open[parts[i+1]]=true; else done=true;
+  }
+  return {total,stop,open,done,any:parts.some(p=>Object.keys(guss[p]).length)};
+}
+function gussInt(t){ return GUSS_INT.find(r=>t>=r[0]&&t<=r[1]); }
+const PART_NAME={p1:'Попереднє дослідження',semi:'Напівтверді',liq:'Рідкі',sol:'Тверді'};
+
+/* --- ТЛТ --- */
+function tltState(){
+  const absY=TLT_FLAT.filter(x=>x.abs&&tlt[x.id]==='y').length;
+  const relY=TLT_FLAT.filter(x=>!x.abs&&tlt[x.id]==='y').length;
+  const n=Object.keys(tlt).length, all=n===TLT_FLAT.length;
+  let cls='',txt='Відповідайте ТАК / НІ на кожен пункт',sub=`Заповнено ${n} з ${TLT_FLAT.length}`;
+  if(absY){cls='bad';txt='Є абсолютні протипоказання ('+absY+') — в/в ТЛТ не проводиться';}
+  else if(relY){cls='warn';txt='Є відносні протипоказання ('+relY+') — рішення приймається індивідуально';}
+  else if(all){cls='ok';txt='Протипоказань не виявлено';}
+  if(all) sub='Усі пункти заповнено';
+  return {absY,relY,n,all,cls,txt,sub};
+}
+
+/* =================== екрани =================== */
+function badge(k){
+  if(DYN.includes(k)){ const c=cur[k]; return answered(k,c)?scoreStr(k,c):''; }
+  if(k==='guss'){ const g=gussState(); return g.any?g.total:''; }
+  if(k==='tlt'){ const s=tltState(); return s.n? (s.absY?'✕':s.relY?'!':s.all?'✓':s.n+'/'+TLT_FLAT.length):''; }
+  return '';
+}
+function renderTabs(){
+  $('tabs').innerHTML=TABS.map(([k,n])=>{const b=badge(k);return `<button class="tab ${tab===k?'on':''}" data-t="${k}">${n}${b!==''?`<span class="b">${b}</span>`:''}</button>`;}).join('');
+}
+function renderDyn(k){
+  const S=SCALES[k], c=cur[k], st=cell(k,c);
+  const dtField=`<div class="fld" style="margin:0 0 10px"><label>Дата і час огляду${S.cols.length>1?` для «${S.cols[c]}»`:''} (необов’язково — якщо не вказати, на бланку буде порожньо)</label><div class="row"><input type="datetime-local" data-cdt value="${esc(ts[k][c]||'')}"><button class="btn" data-cdtclr title="Очистити">✕</button></div></div>`;
+  let h= S.cols.length===1? '' : `<div class="colhead">Стовпчик бланку: <b>${S.cols[c]}</b> — оберіть, у яку клітинку записати</div><div class="cols" id="cols">`+
+    S.cols.map((l,i)=>`<button class="col ${i===c?'on':''}" data-col="${i}">${l}${answered(k,i)?`<i>${scoreStr(k,i)}</i>`:''}</button>`).join('')+`</div>`;
+  h+=S.items.map(it=>{
+    const todo=st[it.id]===undefined;
+    return `<div class="item ${todo?'todo':''}" id="it-${k}-${it.id}"><h3>${it.t}</h3>${it.h?`<div class="hint">${it.h}</div>`:''}`+
+      it.o.map(([v,l])=>`<button class="opt ${st[it.id]===v?'on':''}" data-k="${k}" data-i="${it.id}" data-v="${v}"><span class="n">${v}</span><span>${l}</span></button>`).join('')+`</div>`;
+  }).join('');
+  if(k==='nihss') h=nihssAlert(c)+h;
+  h+=fillBox(k);
+  h+=`<button class="btn" style="width:100%" data-clear="${k}">Очистити стовпчик «${S.cols[c]}»</button>`;
+  return h;
+}
+function gussFill(parts){
+  parts.forEach(p=>{
+    if(p==='p1') G1.forEach(it=>{ guss.p1[it.id]=1; });   /* норма = 1 бал у кожному пункті */
+    else G2.forEach(it=>{ guss[p][it.id]= it.id==='sw'?2:1; });
+  });
+}
+function renderGuss(){
+  const g=gussState();
+  let h=`<button class="btn p" style="width:100%;margin-bottom:6px" data-gfill="all">✓ Порушень ковтання немає — заповнити все (20 балів)</button>
+  <div class="note" style="margin-top:0">Якщо порушення з’явилися на якомусь етапі — натисніть «Без порушень» лише для попередніх етапів, а далі заповніть вручну.</div>
+`;
+  const stageBtn=p=>`<button class="btn" style="padding:4px 10px;font-size:13px;float:right;margin-top:-4px" data-gfill="${p}">Без порушень</button>`;
+  h+=`<div class="sec">${stageBtn('p1')}1. Попереднє дослідження / тест на непряме ковтання — ${gSum('p1')}/5</div>`;
+  h+=G1.map(it=>{const v=guss.p1[it.id];return `<div class="item ${v===undefined?'todo':''}"><h3>${it.t}</h3><div class="hint">${it.h}</div>
+    <div class="yn pts"><button class="${v===it.y?'on':''}" data-gp="p1" data-gi="${it.id}" data-gv="${it.y}">Так · ${it.y}</button><button class="${v===it.n?'on':''}" data-gp="p1" data-gi="${it.id}" data-gv="${it.n}">Ні · ${it.n}</button></div></div>`;}).join('');
+  if(g.stop==='p1') h+=`<div class="verdict bad">Сума ${gSum('p1')} &lt; 5 — зупинити тест</div>`;
+  h+=`<div class="sec">2. Тест на безпосереднє ковтання</div><div class="note" style="margin-top:-4px">Матеріали: вода, харчовий загусник, чайна ложка, чашка, шприц, хліб, печиво</div>`;
+  GC.forEach(cn=>{
+    const on=!!g.open[cn.id];
+    h+=`<div class="sec" style="margin-top:12px">${on?stageBtn(cn.id):''}${cn.t} — ${on?gSum(cn.id)+'/5':'недоступно'}</div>`;
+    if(!on){ h+=`<div class="note">Відкриється, коли попередній етап дасть 5 балів.</div>`; return; }
+    h+=`<div class="note" style="margin-top:-4px">${cn.h}</div>`;
+    h+=G2.map(it=>{const v=guss[cn.id][it.id];return `<div class="item ${v===undefined?'todo':''}"><h3>${it.t}</h3>${it.h?`<div class="hint">${it.h}</div>`:''}`+
+      it.o.map(([ov,l])=>`<button class="opt ${v===ov?'on':''}" data-gp="${cn.id}" data-gi="${it.id}" data-gv="${ov}"><span class="n">${ov}</span><span>${l}</span></button>`).join('')+`</div>`;}).join('');
+    if(g.stop===cn.id) h+=`<div class="verdict bad">Сума ${gSum(cn.id)} &lt; 5 — зупинити тест</div>`;
+  });
+  if(g.done){ const r=gussInt(g.total); h+=`<div class="verdict ${g.total===20?'ok':g.total>=10?'warn':'bad'}">GUSS ${g.total}/20 — ${r[2]}<small>${r[3].replace(/\n/g,'<br>')}</small></div>`; }
+  h+=`<button class="btn" style="width:100%" data-gclear>Очистити GUSS</button>`;
+  return h;
+}
+function renderTlt(){
+  const s=tltState();
+  let h=`<div class="verdict ${s.cls}">${s.txt}<small>${s.sub}</small></div>`;
+  h+=`<div class="grid"><button class="btn" data-tall="n">Решта — НІ</button><button class="btn" data-tclear>Очистити</button></div>`;
+  h+=`<div class="note">«Решта — НІ» ставить НІ лише в незаповнених пунктах.</div>`;
+  let lastG=null,lastS=null;
+  TLT_FLAT.forEach((x,i)=>{
+    const g=x.abs?TLT[0].g:TLT[1].g;
+    if(g!==lastG){ h+=`<div class="sec">${g}</div>`; lastG=g; lastS=null; }
+    if(x.sub&&x.sub!==lastS){ h+=`<div class="note" style="font-weight:700;margin-top:12px">${x.sub}:</div>`; lastS=x.sub; }
+    const v=tlt[x.id], n=x.id.slice(1);
+    h+=`<div class="item ${v===undefined?'todo':''}"><h3 style="font-weight:500">${n}. ${x.t}</h3>${x.note?`<div class="hint">Примітка: ${x.note}</div>`:''}
+      <div class="yn"><button class="y ${v==='y'?'on':''}" data-tl="${x.id}" data-tv="y">ТАК</button><button class="n ${v==='n'?'on':''}" data-tl="${x.id}" data-tv="n">НІ</button></div></div>`;
+  });
+  h+=renderAlteplase();
+  h+=`<div class="sec">Часові показники — госпіталізація в межах</div><div class="item">`+
+    TLT_TIME.map((t,i)=>`<button class="opt ${tltTime===i?'on':''}" data-tt="${i}"><span class="n">${tltTime===i?'✓':''}</span><span>${t}</span></button>`).join('')+`</div>`;
+  return h;
+}
+
+/* =================== друковані бланки =================== */
+function shortCol(l){ return l==='Госп.'?'Госп':l.replace(' ','<br>'); }
+function pinfo(extra){
+  const pt=$('pt').value.trim();
+  return `<table class="pinfo"><tr><td style="width:68%"><b>Пацієнт:</b> ${esc(ptLabel())}</td><td><b>Дата госп.:</b> ${esc(admStr())}</td></tr>${extra||''}</table>`;
+}
+function dynTable(k,showDesc){
+  const S=SCALES[k], cols=S.cols;
+  let h=`<table><tr><th class="crit">Критерії</th><th>Бали</th>${cols.map(l=>`<th class="hv">${shortCol(l)}</th>`).join('')}</tr>`;
+  S.items.forEach(it=>{
+    h+=`<tr><td class="crit">${esc(it.t)}</td><td class="desc">${it.o.map(([v,l])=>`${v} = ${esc(l)}`).join('<br>')}</td>`+
+      cols.map((_,c)=>{const v=cell(k,c)[it.id];return `<td class="v">${v===undefined?'':v}</td>`;}).join('')+`</tr>`;
+  });
+  h+=`<tr class="tot"><td colspan="2" style="text-align:center">Разом</td>${cols.map((_,c)=>`<td class="v">${answered(k,c)?scoreStr(k,c)+(complete(k,c)?'':'*'):''}</td>`).join('')}</tr>`;
+  h+=`<tr><td colspan="2" style="text-align:center;height:40px">Дата</td>${cols.map((_,c)=>`<td class="v small" style="height:40px;font-size:9px">${c===0? (answered(k,0)?dShort(meta.adm):'') : (answered(k,c)?dShort(ts[k][c]):'')}</td>`).join('')}</tr>`;
+  h+=`</table>`;
+  return h;
+}
+function signAdm(){ return `<div class="sign"><div>Лікар (первинний огляд при поступленні):<span>${esc(meta.doc)}</span></div><div>Підпис:<span></span></div></div>`; }
+function sheetNIHSS(){
+  const S=SCALES.nihss;
+  return `<div class="sheet"><h1>${S.full}</h1>${pinfo()}${dynTable('nihss')}
+  <div class="leg"><b>Інтерпретація:</b> 0 — немає дефіциту; 1–4 — легкий; 5–15 — середньої тяжкості; 16–20 — помірно тяжкий; 21–42 — тяжкий інсульт. * — пункти заповнено не повністю.</div>${signAdm()}
+  </div>`;
+}
+function sheetFOUR(){
+  const S=SCALES.four, st=cell('four',0), a=answered('four',0), s=total('four',0), ok=complete('four',0);
+  let h=`<div class="sheet"><div style="text-align:right;font-weight:700;font-size:11px">Додаток 7 до Стандарту медичної допомоги «Ішемічний інсульт»</div>
+  <h1>${S.full}</h1>${pinfo()}
+  <table><tr><th class="crit">Критерії</th><th>Опис</th><th style="width:60px">Бал</th></tr>`;
+  S.items.forEach(it=>{ it.o.forEach(([v,l],j)=>{
+    h+=`<tr>${j===0?`<td class="crit" rowspan="${it.o.length}">${esc(it.t)}</td>`:''}<td style="font-size:12px;padding:4px 6px">${v} = ${esc(l)}</td><td class="x">${st[it.id]===v?'✕':''}</td></tr>`;
+  }); });
+  const f=id=>st[id]!==undefined?st[id]:'&nbsp;&nbsp;&nbsp;&nbsp;';
+  h+=`</table><div style="font-size:13.5px;margin:14px 0 8px">Загальна кількість балів (E= ${f('E')}, M= ${f('M')}, B= ${f('B')}, R= ${f('R')}) = <b>${a?s+(ok?'':'*'):'______'}</b></div>
+  <div style="font-size:12.5px;margin:6px 0 4px"><b>Запис результату оцінювання:</b></div>
+  <table style="width:62%">`;
+  [[16,16,'ясна свідомість'],[15,15,'помірне оглушення'],[13,14,'глибоке оглушення'],[9,12,'сопор'],[7,8,'кома I'],[1,6,'кома II'],[0,0,'кома III (смерть кори головного мозку)']].forEach(r=>{
+    const on=a&&ok&&s>=r[0]&&s<=r[1];
+    h+=`<tr><td style="width:90px;font-size:12px">${r[0]===r[1]?r[0]:r[0]+'–'+r[1]} балів</td><td style="font-size:12px">${r[2]}</td><td class="x" style="width:40px">${on?'✕':''}</td></tr>`;
+  });
+  const ds=a?fmtD(meta.adm):'', tm=a?meta.admT:'';
+  h+=`</table><div class="sign" style="margin-top:30px"><div>Лікар:<span>${esc(meta.doc)}</span></div><div>Дата:<span style="min-width:100px">${ds}</span></div><div>Години:<span style="min-width:70px">${tm}</span></div></div>
+  <div class="sign"><div></div><div>Підпис:<span></span></div></div></div>`;
+  return h;
+}
+function sheetGCSmRS(){
+  const G=SCALES.gcs, M=SCALES.mrs;
+  const E=G.items[0].o, V=G.items[1].o.filter(o=>o[0]!=='T'), Mo=G.items[2].o;
+  let h=`<div class="sheet"><h1>${G.full}</h1>${pinfo()}
+  <table><tr><th style="text-align:left">Розплющування очей (E)</th><th></th><th style="text-align:left">Мовна реакція (V)</th><th></th><th style="text-align:left">Рухова реакція (M)</th><th></th></tr>`;
+  for(let i=0;i<6;i++){
+    const e=E[i],v=V[i],m=Mo[i];
+    h+=`<tr><td>${e?esc(e[1]):''}</td><td class="gt">${e?e[0]:''}</td><td>${v?esc(v[1]):''}</td><td class="gt">${v?v[0]:''}</td><td>${esc(m[1])}</td><td class="gt">${m[0]}</td></tr>`;
+  }
+  h+=`</table><div class="leg" style="text-align:center"><b>Ясна свідомість 15 б; оглушення 13–14 б; сопор 9–12 б; кома 4–8 б; термінальна кома 3 б.</b> Інтубований: V = T.</div>`;
+  const grid=(from,to,title)=>{
+    let t=`<table style="margin-top:4px"><tr><th style="width:44px">${title}</th>${G.cols.slice(from,to).map(l=>`<th class="hv" style="width:auto">${shortCol(l)}</th>`).join('')}</tr>`;
+    t+=`<tr><td class="gt"><b>Бали</b></td>${G.cols.slice(from,to).map((_,j)=>`<td class="v" style="width:auto;height:34px;font-size:14px">${answered('gcs',from+j)?scoreStr('gcs',from+j):''}</td>`).join('')}</tr></table>`;
+    return t;
+  };
+  h+=`<div class="leg" style="margin-top:6px"><b>1 доба</b> (погодинно)</div>`+grid(0,13,'Год')+grid(13,25,'Год');
+  h+=`<div class="leg" style="margin-top:6px"><b>2–10 доба</b></div>`+grid(25,34,'Доба');
+  h+=`<h2>${M.full}</h2><table><tr><th style="width:34px">Бал</th><th>Опис</th>${M.cols.map(l=>`<th class="hv">${shortCol(l)}</th>`).join('')}</tr>`;
+  M.items[0].o.forEach(([v,l])=>{
+    h+=`<tr><td class="gt"><b>${v}</b></td><td class="desc">${esc(l)}</td>${M.cols.map((_,c)=>`<td class="x">${cell('mrs',c).mRS===v?'✕':''}</td>`).join('')}</tr>`;
+  });
+  h+=`</table>${signAdm()}</div>`;
+  return h;
+}
+function sheetGUSS(){
+  const g=gussState(), box=(on)=>on?'☒':'☐';
+  let h=`<div class="sheet"><h1>GUSS-оцінювання (дослідження ковтальної функції)</h1>${pinfo(`<tr><td><b>Дата, час:</b> ${g.any?esc(admStr()):''}</td><td><b>Дослідження провів:</b> ${esc(meta.doc)}</td></tr>`)}
+  <div class="leg"><b>1. Попереднє дослідження / тест на непряме ковтання</b></div>
+  <table><tr><th style="width:170px"></th><th></th><th style="width:60px">ТАК</th><th style="width:60px">НІ</th></tr>`;
+  G1.forEach(it=>{const v=guss.p1[it.id];h+=`<tr><td><b>${esc(it.t)}</b></td><td class="desc">${esc(it.h)}</td><td class="gt box">${it.y} ${box(v===it.y)}</td><td class="gt box">${it.n} ${box(v===it.n)}</td></tr>`;});
+  const p1s=Object.keys(guss.p1).length?gSum('p1'):'';
+  h+=`<tr class="tot"><td colspan="2" style="text-align:right">РАЗОМ (5):</td><td colspan="2" class="v" style="width:auto">${p1s}</td></tr></table>
+  <div class="leg">1–4 = зупинити тест (див. інтерпретацію); 5 = продовжити за частиною 2</div>
+  <div class="leg" style="margin-top:6px"><b>2. Тест на безпосереднє ковтання</b> (матеріали: вода, харчовий загусник, чайна ложка, чашка, шприц, хліб, печиво)</div>
+  <table><tr><th style="width:170px">В наступному порядку</th>${GC.map(c=>`<th>${c.t.toUpperCase()} →</th>`).join('')}</tr>
+  <tr><td></td>${GC.map(c=>`<td class="desc" style="font-size:9.3px">${esc(c.h)}</td>`).join('')}</tr>`;
+  G2.forEach(it=>{
+    h+=`<tr><td><b>${esc(it.t.toUpperCase())}</b>${it.h?`<div class="desc" style="font-size:9px;font-style:italic">${esc(it.h)}</div>`:''}<div class="desc" style="padding-left:8px">${it.o.map(o=>'• '+esc(o[1])).join('<br>')}</div></td>`+
+      GC.map(c=>{const v=guss[c.id][it.id];return `<td class="gt box" style="vertical-align:bottom;line-height:1.5">${it.o.map(o=>`${o[0]} ${box(v===o[0])}`).join('<br>')}</td>`;}).join('')+`</tr>`;
+  });
+  h+=`<tr class="tot"><td style="text-align:right">РАЗОМ (5):</td>${GC.map(c=>`<td class="v" style="width:auto">${Object.keys(guss[c.id]).length?gSum(c.id):''}</td>`).join('')}</tr>
+  <tr><td></td><td class="desc">1–4 = зупинити тест<br>5 = продовжити з рідкими</td><td class="desc">1–4 = зупинити тест<br>5 = продовжити з твердими</td><td></td></tr>
+  <tr class="tot"><td colspan="3" style="font-size:13px">РАЗОМ (непряме + безпосереднє ковтання) (20):</td><td class="v" style="width:auto;font-size:15px">${g.done?g.total:''}</td></tr></table>
+  <div class="leg" style="margin-top:6px"><b>Інтерпретація та рекомендації</b></div>
+  <table><tr><th style="width:52px">Бали</th><th style="width:170px">Ступінь</th><th>Рекомендації</th><th style="width:30px"></th></tr>`;
+  const r=g.done?gussInt(g.total):null;
+  GUSS_INT.forEach(x=>{h+=`<tr><td class="gt">${x[0]===x[1]?x[0]:x[0]+'–'+x[1]}</td><td class="desc">${esc(x[2])}</td><td class="desc" style="font-size:9.6px">${esc(x[3]).replace(/\n/g,'<br>')}</td><td class="x">${r===x?'✕':''}</td></tr>`;});
+  h+=`</table><div class="sign"><div>Лікар:<span>${esc(meta.doc)}</span></div><div>Підпис:<span></span></div></div>
+  <div class="foot">Trapl M. et al. Dysphagia bedside screening for acute-stroke patients: the Gugging Swallowing Screen. Stroke. 2007;38:2948</div></div>`;
+  return h;
+}
+function sheetTLT(){
+  const s=tltState(), mark=(x,v)=>tlt[x.id]===v?'✕':'';
+  let h=`<div class="sheet"><h1 style="margin-bottom:0">Протипоказання для проведення в/в ТЛТ</h1>
+  <div style="text-align:center;font-size:11px;margin-bottom:6px">(згідно Стандарту медичної допомоги «Ішемічний інсульт», наказ МОЗ України №1070 від 20.06.2024, додаток 13)</div>
+  ${pinfo()}
+  <table><tr><th>Пункт</th><th style="width:42px">ТАК</th><th style="width:42px">НІ</th></tr>`;
+  let lastG=null,lastS=null;
+  TLT_FLAT.forEach(x=>{
+    const g=x.abs?TLT[0].g:TLT[1].g;
+    if(g!==lastG){ h+=`<tr><td colspan="3" class="sh" style="font-weight:700">${g}</td></tr>`; lastG=g; lastS=null; }
+    if(x.sub&&x.sub!==lastS){ h+=`<tr><td colspan="3" style="font-weight:700;font-style:italic">${x.sub}:</td></tr>`; lastS=x.sub; }
+    h+=`<tr><td class="desc">${x.id.slice(1)}. ${esc(x.t)}${x.note?`<br><i>Примітка: ${esc(x.note)}</i>`:''}</td><td class="x">${mark(x,'y')}</td><td class="x">${mark(x,'n')}</td></tr>`;
+  });
+  h+=`<tr><td colspan="3" class="sh" style="font-weight:700">Часові показники — госпіталізація в межах</td></tr>`;
+  h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11.5px">${TLT_TIME.map((t,i)=>`<span style="margin-right:22px;font-family:Arimo,Arial,"Liberation Sans",sans-serif">${tltTime===i?'☒':'☐'} ${t}</span>`).join('')}</td></tr>`;
+  const ts2=timeStats(), al=alteplase();
+  const tline=[tm.onset?'Початок симптомів: '+fmtDT(tm.onset):'', tm.ct?'КТ/МРТ: '+tm.ct+(ts2.d2ct!==null?' (двері–КТ '+hm(ts2.d2ct)+')':''):'', tm.needle?'вТЛТ: '+tm.needle+(ts2.d2n!==null?' (двері–голка '+hm(ts2.d2n)+')':''):''].filter(Boolean).join('; ');
+  if(tline) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px">${esc(tline)}</td></tr>`;
+  if(typeof decisions==='function'&&decisions().tlt&&meta.adm) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px"><b>В/в тромболізис:</b> ${esc(admStr())} (час госпіталізації)</td></tr>`;
+  if(al) h+=`<tr><td colspan="3" style="padding:4px 6px;font-size:11px"><b>Альтеплаза:</b> маса ${al.w} кг; загальна доза ${al.total} мг; болюс ${al.bolus} мг; інфузія ${al.inf} мг за 60 хв</td></tr>`;
+  const concl= s.n? s.txt : '';
+  h+=`<tr><td colspan="3" style="padding:6px;font-size:12px"><b>Висновок:</b> ${esc(concl)}</td></tr></table>
+  <div class="sign"><div>Лікар (черговий/лікуючий):<span>${esc(meta.doc)}</span></div><div>Підпис:<span></span></div></div></div>`;
+  return h;
+}
+const SHEET_FN={dec:sheetDec,tlt:sheetTLT,nihss:sheetNIHSS,gcsmrs:sheetGCSmRS,four:sheetFOUR,guss:sheetGUSS};
+function sheetHasData(id){
+  if(id==='dec') return dec.lvo!==null||dec.basin!==''||complete('nihss',0)||Object.keys(tlt).length>0;
+  if(id==='tlt') return Object.keys(tlt).length>0||tltTime!==null;
+  if(id==='guss') return gussState().any;
+  if(id==='gcsmrs') return filled('gcs').length>0||filled('mrs').length>0;
+  return filled(id).length>0;
+}
+function isSel(id){ return printSel[id]!==undefined?printSel[id]:sheetHasData(id); }
+function selSheets(){ return SHEETS.map(s=>s[0]).filter(isSel); }
+
+/* --- текст для месенджера --- */
+function textReport(){
+  const pt=$('pt').value.trim(); const L=[];
+  DYN.forEach(k=>{
+    const f=filled(k); if(!f.length) return;
+    const S=SCALES[k];
+    L.push(`${S.name}: `+f.map(c=>{
+      const st=cell(k,c); let d='';
+      if(k==='gcs') d=` (E${st.E??'?'}V${st.V??'?'}M${st.M??'?'})`;
+      if(k==='four') d=` (E${st.E??'?'}M${st.M??'?'}B${st.B??'?'}R${st.R??'?'})`;
+      return `${S.cols[c]} — ${scoreStr(k,c)}${d}${complete(k,c)?'':' ⚠неповн.'}`;
+    }).join('; ')+` → ${S.interp(total(k,f[f.length-1]),cell(k,f[f.length-1]))}`);
+  });
+  const g=gussState();
+  if(g.any) L.push(`GUSS: ${g.total}/20`+(g.done?` — ${gussInt(g.total)[2]}`:' (не завершено)'));
+  const tsx=timeStats(); if(tsx.d2n!==null) L.push(`Двері–голка: ${hm(tsx.d2n)}`+(tsx.d2ct!==null?`; двері–КТ: ${hm(tsx.d2ct)}`:''));
+  const s=tltState();
+  if(s.n) L.push(`ТЛТ: ${s.txt}`+(tltTime!==null?`; госпіталізація ${TLT_TIME[tltTime]}`:''));
+  return `Інсультне відділення\n${pt?'Пацієнт: '+ptLabel()+'\n':''}\n`+(L.length?L.join('\n'):'(нічого не заповнено)');
+}
+
+/* --- екран друку --- */
+function renderReport(){
+  return `<div class="sec">Дані для бланків</div>
+  <div class="grid">
+    <div class="fld full"><label>Лікар (запам’ятовується)</label><input type="text" data-m="doc" value="${esc(meta.doc)}" placeholder="Прізвище І.Б."></div>
+  </div>
+  <div class="sec">Які бланки друкувати</div><div class="grid">`+
+  SHEETS.map(([id,n])=>`<label class="chk"><input type="checkbox" data-ps="${id}" ${isSel(id)?'checked':''}> ${n}${sheetHasData(id)?'':' <span class="interp">(порожній)</span>'}</label>`).join('')+
+  `</div><p class="note">Порожній бланк теж можна позначити — вийде чиста форма для заповнення від руки.</p>
+  <div class="grid"><button class="btn p full" id="pdf">⬇ Завантажити PDF на телефон</button></div>
+  <div id="gdres">${gdLast?gdLinkHTML():''}</div>
+  <p class="note">PDF завантажується на цей пристрій з назвою «Бланки_Прізвище_дата».</p>
+  <p class="note">Кожен бланк — окрема сторінка A4. Незаповнені стовпчики лишаються порожніми, щоб дописувати ручкою.</p>
+  <div id="pvs"></div>
+  <div class="sec">Надіслати текстом у месенджер</div>
+  <div class="grid">
+    <button class="btn" id="copy">Копіювати текст</button>
+    <a class="btn" id="tg" target="_blank" rel="noopener">Telegram</a>
+    <a class="btn" id="vb">Viber</a>
+    <a class="btn" id="wa" target="_blank" rel="noopener">WhatsApp</a>
+  </div>
+  <p class="note">Прізвище, ініціали, рік народження та бали автоматично зберігаються лише на цьому пристрої, у цьому браузері (вкладка «📁 Пацієнти»). Колеги їх не бачать; при очищенні даних браузера записи зникнуть.</p>`;
+}
+function refreshReport(){
+  const p=$('pvs');
+  if(p){
+    const sel=selSheets();
+    p.innerHTML=sel.length? sel.map(id=>`<div class="pv-wrap"><div class="pv-inner">${SHEET_FN[id]()}</div></div>`).join('') : '<p class="note">Оберіть хоча б один бланк.</p>';
+    fitPreview();
+  }
+  const t=encodeURIComponent(textReport());
+  if($('tg')) $('tg').href='https://t.me/share/url?url=%20&text='+t;
+  if($('wa')) $('wa').href='https://wa.me/?text='+t;
+  if($('vb')) $('vb').href='viber://forward?text='+t;
+}
+function fitPreview(){
+  document.querySelectorAll('.pv-wrap').forEach(w=>{
+    const p=w.firstElementChild; const sc=Math.min(1,w.clientWidth/794);
+    const sh=p.firstElementChild, H=Math.max(1123,sh?sh.offsetHeight:1123), k=sc*Math.min(1,1123/H);
+    p.style.transform=`scale(${k})`; p.style.marginLeft=((w.clientWidth-794*k)/2)+'px'; w.style.height=(1123*sc)+'px';
+  });
+}
+
+/* --- нижня панель --- */
+function renderBar(){
+  if(tab==='dec'){ const d=decisions(); $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Рішення: ${DECS.filter(([k])=>d[k]).map(([,t])=>t).join(', ')||'—'}</div><div class="interp">${dec.decided?'обрано лікарем':'за підказкою (можна змінити)'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return; }
+  if(tab==='time'){ const t=timeStats(); $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Двері → голка: ${hm(t.d2n)}</div><div class="interp">Двері → КТ: ${hm(t.d2ct)}</div></div><button class="btn p" data-t="tlt">ТЛТ →</button>`; return; }
+  if(tab==='pts'){
+    $('bar').innerHTML=`<div class="grow interp">${$('pt').value.trim()?'Відкрито: '+esc(ptLabel()):'Пацієнта не обрано'}</div><button class="btn p" id="reset2">＋ Новий пацієнт</button>`; return;
+  }
+  if(tab==='rep'){
+    $('bar').innerHTML=`<div class="grow interp">${selSheets().length} бланк(и) до друку</div><button class="btn p" id="pdf2">PDF A4</button>`; return;
+  }
+  if(tab==='guss'){
+    const g=gussState();
+    $('bar').innerHTML=`<div class="score">${g.any?g.total:'—'}</div><div class="grow"><div style="font-weight:600">GUSS <span class="interp">/ 20</span></div><div class="interp">${g.done?gussInt(g.total)[2]:g.any?'Тест триває':'Почніть з частини 1'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return;
+  }
+  if(tab==='tlt'){
+    const s=tltState();
+    $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">в/в ТЛТ</div><div class="interp">${s.txt}</div></div><button class="btn p" data-t="rep">Друк</button>`; return;
+  }
+  const S=SCALES[tab], c=cur[tab], s=total(tab,c), a=answered(tab,c), n=S.items.length;
+  const al= tab==='nihss'&&nihssAlert(c)? ' <span style="color:var(--bad)">⚠ +4</span>':'';
+  $('bar').innerHTML=`<div class="score">${a?scoreStr(tab,c):'—'}${al}</div><div class="grow"><div style="font-weight:600">${S.name} · ${S.cols[c]} ${a<n?`<span class="interp">· ${a}/${n}</span>`:''}</div><div class="interp">${a?S.interp(s,cell(tab,c)):'Оберіть відповіді'}</div></div><button class="btn p" data-t="rep">Друк</button>`;
+}
+function render(keepScroll){
+  const y=window.scrollY, cx=$('cols')?$('cols').scrollLeft:0;
+  renderTabs();
+  $('main').innerHTML= tab==='dec'?renderDec(): tab==='time'?renderTime(): tab==='pts'?renderPatients(): tab==='rep'?renderReport(): tab==='guss'?renderGuss(): tab==='tlt'?renderTlt(): renderDyn(tab);
+  renderBar();
+  if(tab==='rep') refreshReport();
+  applyRO(); scheduleSave();
+  if(keepScroll){ window.scrollTo(0,y); if($('cols')) $('cols').scrollLeft=cx; }
+  else if($('cols')){ const on=$('cols').querySelector('.on'); if(on) $('cols').scrollLeft=on.offsetLeft-60; }
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* =================== PDF =================== */
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+let libs=null;
+function ensureLibs(){
+  if(!libs) libs=Promise.all([
+    window.html2canvas?1:loadScript('lib/html2canvas.min.js'),
+    window.jspdf?1:loadScript('lib/jspdf.umd.min.js')
+  ]).catch(e=>{libs=null;throw e;});
+  return libs;
+}
+let downloads=null;
+if(window.claude&&window.claude.use){ window.claude.use('downloads').then(d=>{downloads=d;}).catch(()=>{}); }
+function fileName(){
+  const pt=$('pt').value.trim().split(/\s+/)[0]||'пацієнт';
+  return `Бланки_${pt}_${nowLocal().slice(0,10)}.pdf`.replace(/[\\/:*?"<>|]/g,'_');
+}
+let busy=false;
+async function buildPDF(sel,scale,q){
+  await ensureLibs();
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+  const off=$('offscreen');
+  for(let i=0;i<sel.length;i++){
+    off.innerHTML=SHEET_FN[sel[i]]();
+    try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(_){}
+    const canvas=await html2canvas(off.firstElementChild,{scale,backgroundColor:'#ffffff',windowWidth:794});
+    if(i) pdf.addPage();
+    /* якщо бланк довший за A4 — зменшуємо пропорційно, щоб уся сторінка вмістилася */
+    const hmm=canvas.height*210/canvas.width, w=hmm>297? 210*297/hmm : 210, h=hmm>297? 297 : hmm;
+    pdf.addImage(canvas.toDataURL('image/jpeg',q),'JPEG',(210-w)/2,0,w,h);
+  }
+  off.innerHTML='';
+  return pdf.output('blob');
+}
+async function makePDF(){
+  if(busy) return;
+  const sel=selSheets();
+  if(!sel.length){ toast('Оберіть хоча б один бланк'); return; }
+  busy=true; const b=$('pdf'); if(b){b.disabled=true;b.textContent='Готую PDF…';}
+  try{
+    const blob=await buildPDF(sel,2.5,0.92);
+    if(!downloads){ downloads=(window.claude&&window.claude.use)? await window.claude.use('downloads'):null; }
+    if(downloads){
+      try{ await downloads.save({filename:fileName(),data:blob}); toast('PDF готовий'); }
+      catch(e){ if(e&&e.code==='declined') toast('Скасовано'); else toast('Не вдалося зберегти PDF ('+(e&&e.code||'помилка')+')'); }
+    } else {
+      const f=new File([blob],fileName(),{type:'application/pdf'});
+      if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){
+        try{ await navigator.share({files:[f],title:fileName()}); toast('PDF готовий'); }catch(e){ if(!(e&&e.name==='AbortError')) toast('Не вдалося поділитися PDF'); }
+      } else {
+        const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=fileName(); document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(u),60000); toast('PDF завантажено');
+      }
+    }
+  }catch(e){ toast('Не вдалося створити PDF. Перевірте інтернет і спробуйте ще раз.'); }
+  finally{ busy=false; const b2=$('pdf'); if(b2){b2.disabled=false;b2.textContent='⬇ Завантажити PDF для друку (A4)';} }
+}
+async function copy(){
+  const txt=textReport();
+  try{ await navigator.clipboard.writeText(txt); toast('Скопійовано'); }
+  catch(e){ const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+    let ok=false; try{ok=document.execCommand('copy');}catch(_){} ta.remove(); toast(ok?'Скопійовано':'Не вдалося скопіювати'); }
+}
+
+
+
+
+/* =================== ⏱ Час і терапевтичне вікно =================== */
+function admDate(){ return meta.adm&&meta.admT? new Date(meta.adm+'T'+meta.admT) : null; }
+function onsetDate(){ return tm.onset? new Date(tm.onset) : null; }
+function atTime(hhmm){ /* час того ж дня, що й поступлення; якщо раніше — наступна доба */
+  const a=admDate(); if(!a||!hhmm) return null;
+  let d=new Date(meta.adm+'T'+hhmm); if(d<a) d=new Date(d.getTime()+86400000); return d; }
+const mins=(a,b)=> a&&b? Math.round((b-a)/60000) : null;
+function hm(m){ if(m===null) return '—'; const s=m<0?'−':''; m=Math.abs(m); return s+(m>=60? Math.floor(m/60)+' год '+(m%60)+' хв' : m+' хв'); }
+/* вікно — з «Часових показників» вкладки ТЛТ (вкладку «Час» прибрано) */
+function windowIdx(){ return tltTime===null||tltTime===undefined? null : tltTime; }
+function timeStats(){
+  const a=admDate(), o=onsetDate(), ct=atTime(tm.ct), nd=atTime(tm.needle);
+  return {a,o,ct,nd, onAdm:mins(o,a), d2ct:mins(a,ct), d2n:mins(a,nd), o2n:mins(o,nd)};
+}
+function badge2(ok,txt){ return `<span style="display:inline-block;padding:1px 8px;border-radius:8px;font-size:12px;font-weight:700;background:${ok===null?'var(--bg)':ok?'var(--ok-soft)':'var(--bad-soft)'};color:${ok===null?'var(--muted)':ok?'var(--ok)':'var(--bad)'}">${txt}</span>`; }
+function renderTime(){
+  const t=timeStats(), w=windowIdx();
+  let h=`<div class="sec">Ключові часові точки (наказ 1070, розділ III)</div>
+  <div class="item"><div class="fld"><label>Початок симптомів / востаннє бачили без ознак інсульту</label><input type="datetime-local" data-tm="onset" value="${esc(tm.onset)}"></div>
+  <div class="note" style="margin:8px 0 0">Поступлення: <b>${t.a?esc(admStr()):'вкажіть дату і час госпіталізації вгорі'}</b></div></div>
+  <div class="grid">
+    <div class="fld"><label>КТ/МРТ виконано о</label><input type="time" data-tm="ct" value="${esc(tm.ct)}"></div>
+    <div class="fld"><label>Початок вТЛТ («голка») о</label><input type="time" data-tm="needle" value="${esc(tm.needle)}"></div>
+  </div>
+  <div class="sec">Розрахунок</div><div class="item">
+    <div style="margin:4px 0">Від початку симптомів до поступлення: <b>${hm(t.onAdm)}</b></div>
+    <div style="margin:6px 0">Терапевтичне вікно при поступленні: ${w===null?badge2(null,'—'):badge2(w===0,TLT_TIME[w])}
+      ${w===0?'<div class="interp">У межах «стандартного вікна» вТЛТ (≤4,5 год) і ЕВТ (≤6 год)</div>':w===1?'<div class="interp">Поза вікном вТЛТ; «стандартне вікно» ЕВТ (≤6 год). вТЛТ >4,5 год — лише індивідуально з розширеною нейровізуалізацією</div>':w===2?'<div class="interp">«Розширене вікно» ЕВТ (6–24 год) — за даними перфузійної/мультифазної візуалізації</div>':w===3?'<div class="interp">Понад 24 год</div>':''}</div>
+    <div style="margin:6px 0">Двері → КТ/МРТ: <b>${hm(t.d2ct)}</b> ${t.d2ct===null?'':badge2(t.d2ct<=30,t.d2ct<=30?'≤30 хв ✓':'>30 хв')}</div>
+    <div style="margin:6px 0">Двері → голка: <b>${hm(t.d2n)}</b> ${t.d2n===null?'':badge2(t.d2n<60, t.d2n<30?'<30 хв — ціль ✓':t.d2n<60?'<60 хв':'≥60 хв')}</div>
+    <div style="margin:6px 0">Від початку симптомів до голки: <b>${hm(t.o2n)}</b> ${t.o2n===null?'':badge2(t.o2n<=270,t.o2n<=270?'≤4,5 год':'>4,5 год')}</div>
+  </div>
+  <p class="note">Терапевтичне вікно автоматично переноситься у «Часові показники» на вкладці ТЛТ. Цілі: КТ ≤30 хв від поступлення; «двері–голка» в середньому &lt;30 хв, у 90% пацієнтів &lt;60 хв.</p>`;
+  return h;
+}
+function syncWindow(){}
+/* =================== 💉 Альтеплаза =================== */
+function alteplase(){
+  const w=parseFloat(String(tm.weight).replace(',','.')); if(!(w>0)) return null;
+  const total=Math.min(Math.round(w*0.9*10)/10,90), bolus=Math.round(total*0.1*10)/10, inf=Math.round((total-bolus)*10)/10;
+  return {w,total,bolus,inf,capped:w*0.9>90};
+}
+function renderAlteplase(){
+  const a=alteplase();
+  return `<div class="sec">Калькулятор альтеплази (0,9 мг/кг, макс. 90 мг)</div><div class="item">
+    <div class="fld"><label>Маса тіла, кг</label><input type="text" inputmode="decimal" data-tm="weight" value="${esc(tm.weight)}" placeholder="напр. 78"></div>
+    ${a?`<div style="margin-top:10px;font-size:15px">Загальна доза: <b>${a.total} мг</b>${a.capped?' <span class="interp">(обмежено максимумом 90 мг)</span>':''}</div>
+    <div style="margin-top:6px">Болюс 10%: <b>${a.bolus} мг</b> в/в струминно за 1 хв</div>
+    <div style="margin-top:4px">Інфузія 90%: <b>${a.inf} мг</b> протягом 60 хв (${a.inf} мг/год)</div>
+    <div class="interp" style="margin-top:6px">При концентрації 1 мг/мл: болюс ${a.bolus} мл, інфузія ${a.inf} мл/год. Звіряйте з інструкцією до препарату.</div>`:'<div class="interp" style="margin-top:6px">Введіть масу тіла — доза розрахується автоматично.</div>'}
+  </div>`;
+}
+/* =================== ⚠ NIHSS +4 =================== */
+function nihssAlert(c){
+  if(c===0||!complete('nihss',0)||!complete('nihss',c)) return '';
+  const d=total('nihss',c)-total('nihss',0);
+  return d>=4? `<div class="verdict bad">NIHSS зріс на ${d} б від поступлення (${total('nihss',0)} → ${total('nihss',c)})<small>Наказ 1070: при збільшенні NIHSS на ≥4 бали, сильному головному болю, підйомі АТ чи блюванні — невідкладна безконтрастна МСКТ/МРТ головного мозку.</small></div>` : '';
+}
+
+
+/* =================== ⚖ Клінічне рішення лікаря (форма УТІМ) =================== */
+const ASPR=[['C','Голівка хвостатого ядра (C)'],['L','Лентикулярне ядро (L)'],['IC','Внутрішня капсула (IC)'],['I','Острівцева кора (I)'],['M1','M1'],['M2','M2'],['M3','M3'],['M4','M4'],['M5','M5'],['M6','M6']];
+const ARTS=[['ВСА','ВСА'],['СМА-M1','СМА, сегмент M1'],['СМА-M2','СМА, сегмент M2'],['СМА-M3','СМА, сегмент M3'],['ПМА','ПМА'],['ЗМА','ЗМА'],['ХА','Хребтова артерія'],['ОА','Основна (базилярна) артерія']];
+const BASINS=['СМА','ПМА','ЗМА','ВББ'];
+const DECS=[['tlt','В/в тромболізис'],['basic','Базисна терапія при ішемічному інсульті'],['evt','Тромбектомія'],['dhc','Декомпресивна гемікраніектомія']];
+function aspScore(){ if(dec.asp.mode==='calc') return 10-ASPR.filter(([k])=>dec.asp.reg[k]).length; const v=parseInt(dec.asp.val,10); return isNaN(v)?null:Math.max(0,Math.min(10,v)); }
+function ich(){ return tlt.a1==='y'?true: tlt.a1==='n'?false:null; }
+function lvoText(){
+  if(dec.lvoEdit!==null) return dec.lvoEdit;
+  if(!dec.art) return '';
+  const sd= dec.art==='ОА'?'':(dec.aside||'');
+  if(dec.art.startsWith('СМА-')) return `Оклюзія ${sd}СМА в ${dec.art.split('-')[1]}`;
+  if(dec.art==='ОА') return 'Оклюзія основної артерії';
+  return `Оклюзія ${sd}${dec.art}`;
+}
+function autoBasin(){ if(dec.basin) return [dec.basin,dec.bside]; if(!dec.art) return ['','']; const b= dec.art.startsWith('СМА')||dec.art==='ВСА'?'СМА': dec.art==='ПМА'?'ПМА': dec.art==='ЗМА'?'ЗМА':'ВББ'; return [b, b==='ВББ'?'':dec.aside]; }
+function dxText(){
+  if(dec.dxEdit!==null) return dec.dxEdit;
+  const [b,sd]=autoBasin();
+  return 'ГМІ за ішемічним типом'+(b? ` в басейні ${b==='ВББ'?'ВББ':(sd||'')+b}`:'')+(dec.dxExtra?'. '+dec.dxExtra:'');
+}
+function contraList(){ return TLT_FLAT.filter(x=>tlt[x.id]==='y').map(x=>(x.abs?'Абс. ':'Відн. ')+x.id.slice(1)+'. '+x.t); }
+function contra(){ const s=tltState(); return s.absY||s.relY? true : s.n? false : null; }
+function suggest(){
+  const w=windowIdx(), s=tltState(), I=ich(), nA=complete('nihss',0)?total('nihss',0):null, R=[];
+  let tltOk=false, evtOk=false;
+  if(I===true) R.push(['bad','Внутрішньочерепний крововилив — в/в ТЛТ протипоказаний']);
+  else if(s.absY) R.push(['bad','Є абсолютні протипоказання — в/в ТЛТ не проводиться']);
+  else if(w===null) R.push(['warn','Оберіть «Часові показники — госпіталізація в межах» на вкладці ТЛТ, щоб оцінити вікно вТЛТ']);
+  else if(w===0){ tltOk=true; R.push([s.relY?'warn':'ok', s.relY?`У вікні ≤4,5 год; є відносні протипоказання (${s.relY}) — рішення щодо вТЛТ індивідуально`:'У вікні ≤4,5 год, абсолютних протипоказань немає — в/в тромболізис (альтеплаза 0,9 мг/кг)']); if(nA!==null&&nA<=4) R.push(['warn',`NIHSS ${nA}: вТЛТ — при потенційно інвалідизуючому інсульті (зазвичай NIHSS >4)`]); }
+  else R.push(['warn','Поза «стандартним вікном» вТЛТ (>4,5 год) — лише індивідуально з розширеною нейровізуалізацією']);
+  const PROX=['ВСА','СМА-M1','СМА-M2','ОА','ХА'];
+  if(dec.lvo===true&&dec.art&&!PROX.includes(dec.art)){ R.push(['warn','Дистальна оклюзія ('+dec.art.replace('СМА-','СМА ')+') — ЕВТ індивідуально, за рішенням з ендоваскулярним хірургом']); }
+  else if(dec.lvo===true){
+    if(w===0||w===1){ evtOk=true; R.push(['ok','Оклюзія великої судини, ≤6 год — тромбектомія показана; вТЛТ не повинна її затримувати']); }
+    else if(w===2){ evtOk=true; R.push(['warn','Оклюзія великої судини, 6–24 год — ЕВТ у «розширеному вікні» за даними перфузійної/мультифазної візуалізації']); }
+    else R.push(['warn','Оклюзія великої судини — оцініть вікно для ЕВТ']);
+    if(evtOk) R.push(['warn','Якщо ЕВТ у закладі недоступна — переведення до ЗОЗ з ЕВТ («двері–двері» <40 хв без вТЛТ, <100 хв з вТЛТ)']);
+  }
+  const a=aspScore(); if(a!==null&&a<6) R.push(['warn',`ASPECTS ${a} (<6) — відносний протипоказ до вТЛТ (ранні ознаки великого інфаркту)`]);
+  if(dec.edema===true) R.push(['warn','Набряк зі зміщенням ≥5 мм — розглянути декомпресивну гемікраніектомію, консультація нейрохірурга']);
+  return {R,tltOk:tltOk&&!s.relY,evtOk,dhc:dec.edema===true};
+}
+function decisions(){
+  if(dec.decided) return dec.decided;
+  const g=suggest(); return {tlt:g.tltOk, evt:g.evtOk, dhc:g.dhc, basic:!g.tltOk&&!g.evtOk};
+}
+function gcsFirst2(){ const f=filled('gcs').filter(c=>complete('gcs',c)); return f.length? total('gcs',f[0]) : null; }
+function deptAuto(){ if(dec.dept) return dec.dept; const g=gcsFirst2(); return g!==null&&g<12? 'анестезіології та інтенсивної терапії' : 'інсультне'; }
+function syncAsp(){ const a=aspScore(); if(a===null) return; if(a<6){ if(tlt.r8!=='y'){ tlt.r8='y'; dec.r8auto=true; } } else if(dec.r8auto){ tlt.r8='n'; dec.r8auto=false; } }
+function yn(name,val,lbl){ return `<div class="yn" style="margin-top:6px"><button class="y ${val===true?'on':''}" data-dyn="${name}" data-v="1">${lbl&&lbl[0]||'ТАК'}</button><button class="n ${val===false?'on':''}" data-dyn="${name}" data-v="0">${lbl&&lbl[1]||'НІ'}</button></div>`; }
+function renderDec(){
+  const nA=complete('nihss',0)?total('nihss',0):null, nPart=answered('nihss',0), a=aspScore(), cl=contraList(), g=suggest(), d=decisions(), C=contra();
+  let h=`<div class="sec">Підказка за наказом 1070</div>`+g.R.map(([c,t])=>`<div class="verdict ${c}" style="font-weight:500;font-size:14px;padding:9px 11px;margin-bottom:6px">${esc(t)}</div>`).join('')+
+  `<div class="sec">1. Діагноз</div><div class="item">
+    <div class="row" style="flex-wrap:wrap;gap:6px">${BASINS.map(b=>`<button class="col ${autoBasin()[0]===b?'on':''}" data-dbasin="${b}">${b}</button>`).join('')}
+    ${['Л','П'].map(x=>`<button class="col ${autoBasin()[1]===x?'on':''}" data-dbside="${x}">${x==='Л'?'Ліва':'Права'}</button>`).join('')}</div>
+    <div class="fld" style="margin-top:8px"><label>Текст діагнозу (формується автоматично, можна редагувати)</label><textarea data-ddx rows="2" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)">${esc(dxText())}</textarea></div>
+    ${dec.dxEdit!==null?'<button class="btn" style="margin-top:6px;padding:5px 10px;font-size:13px" data-ddxreset>↺ Повернути автоматичний текст</button>':''}
+  </div>
+  <div class="sec">2. Ознаки інтракраніального крововиливу на КТ</div><div class="item">${yn('ich',ich())}<div class="interp" style="margin-top:6px">Пов’язано з п. 1 абсолютних протипоказань ТЛТ</div></div>
+  <div class="sec">3. Тяжкість інсульту</div><div class="item">
+    <div>NIHSS (з вкладки NIHSS, «Госп.»): <b>${nA!==null?nA:nPart?total('nihss',0)+'* (заповнено '+nPart+'/15)':'—'}</b></div>
+    <div class="row" style="margin-top:10px;gap:6px"><button class="col ${dec.asp.mode==='num'?'on':''}" data-dasp="num">ASPECTS числом</button><button class="col ${dec.asp.mode==='calc'?'on':''}" data-dasp="calc">Калькулятор ASPECTS</button></div>
+    ${dec.asp.mode==='num'?`<div class="fld" style="margin-top:8px"><input type="text" inputmode="numeric" maxlength="2" data-daspv value="${esc(dec.asp.val)}" placeholder="0–10"></div>`:
+      `<div class="interp" style="margin:8px 0 4px">Відмітьте ділянки з ранніми ішемічними змінами (−1 бал за кожну):</div><div class="grid">${ASPR.map(([k,t])=>`<label class="chk"><input type="checkbox" data-dasr="${k}" ${dec.asp.reg[k]?'checked':''}>${t}</label>`).join('')}</div>`}
+    <div style="margin-top:8px">ASPECTS: <b>${a??'—'}</b>${a!==null&&a<6?' <span style="color:var(--bad)">(&lt;6 — позначено у протипоказаннях ТЛТ)</span>':''}</div>
+  </div>
+  <div class="sec">4. Протипоказання до тромболізису</div><div class="item">
+    <div>З вкладки ТЛТ: <b>${C===true?'ТАК':C===false?'НІ':'не заповнено'}</b></div>
+    ${cl.length?`<ul style="margin:6px 0 0 18px;padding:0;font-size:13.5px">${cl.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
+    <button class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px" data-t="tlt">Відкрити протипоказання →</button>
+  </div>
+  <div class="sec">5. Оклюзія крупних гілок (КТ-ангіографія)</div><div class="item">${yn('lvo',dec.lvo)}
+    ${dec.lvo?`<div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${ARTS.map(([k,t])=>`<button class="col ${dec.art===k?'on':''}" data-dart="${k}">${t}</button>`).join('')}</div>
+    ${dec.art&&dec.art!=='ОА'?`<div class="row" style="gap:6px;margin-top:8px">${['Л','П'].map(x=>`<button class="col ${dec.aside===x?'on':''}" data-daside="${x}">${x==='Л'?'Ліва':'Права'}</button>`).join('')}</div>`:''}
+    <div class="fld" style="margin-top:8px"><label>Опис (автоматично, можна редагувати)</label><input type="text" data-dlvo value="${esc(lvoText())}"></div>`:''}
+  </div>
+  <div class="sec">6. Набряк мозку зі зміщенням серединних структур ≥5 мм</div><div class="item">${yn('edema',dec.edema)}</div>
+  <div class="sec">Клінічне рішення ${dec.decided?'':'<span style="text-transform:none;font-weight:400">(за підказкою — торкніться, щоб змінити)</span>'}</div><div class="item">`+
+    DECS.map(([k,t])=>`<button class="opt ${d[k]?'on':''}" data-ddec="${k}"><span class="n">${d[k]?'✓':''}</span><span>${t}</span></button>`).join('')+
+    (dec.decided?'<button class="btn" style="margin-top:8px;padding:5px 10px;font-size:13px" data-ddecreset>↺ Повернути підказку</button>':'')+`</div>
+  <div class="sec">Госпіталізація</div><div class="item">
+    <div class="fld"><label>Відділення (автоматично за ШКГ)</label><input type="text" data-ddept value="${esc(deptAuto())}"></div>
+    <div class="note">Час: <b>${meta.admT||'— (вкажіть угорі)'}</b></div>
+    <div class="fld" style="margin-top:6px"><label>Або направлений до іншого ЗОЗ</label><input type="text" data-dother value="${esc(dec.other)}" placeholder="${g.evtOk?'напр. для ЕВТ — назва закладу':''}"></div>
+  </div>
+  <div class="sec">Лікарі</div><div class="item">
+    <div class="note" style="margin-top:0">Автоматично: ${esc(meta.doc||'(вкажіть прізвище на вкладці «Друк»)')}, дата ${esc(fmtD(meta.adm))}</div>
+    <div class="fld"><label>Особистий номер (запам’ятовується)</label><input type="text" data-ddocno value="${esc(docNo)}"></div>
+  </div>`;
+  return h;
+}
+function sheetDec(){
+  const nA=complete('nihss',0)?total('nihss',0):(answered('nihss',0)?total('nihss',0)+'*':''), a=aspScore(), cl=contraList(), d=decisions(), C=contra(), I=ich();
+  const bx=v=>v?'☒':'☐', ynr=v=>`<span style="margin-left:30px">${bx(v===true)} Так</span><span style="margin-left:26px">${bx(v===false)} Ні</span>`;
+  const line=t=>`<div style="border-bottom:1px solid #000;min-height:22px;padding:2px 4px;margin-top:4px">${t||'&nbsp;'}</div>`;
+  const q=(n,t,v)=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12.5px"><span><b>${n}.</b> ${t}</span><span class="box" style="font-size:13px">${ynr(v)}</span></div>`;
+  let h=`<div class="sheet" style="font-size:12.5px">
+  <div style="border:1.5px solid #000;padding:8px 12px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:20px;font-weight:700;letter-spacing:.02em">КЛІНІЧНЕ РІШЕННЯ ЛІКАРЯ</div><div style="font-size:9.5px;text-align:right;max-width:230px">за формою Українського товариства<br>інсультної медицини</div></div>
+  <div style="margin-top:8px">${pinfo()}</div>
+  <div style="margin-top:6px;font-size:12.5px"><b>1.</b> Діагноз</div>${line(esc(dxText()))}${line('')}
+  ${q(2,'Ознаки інтракраніального крововиливу за результатами КТ',I)}
+  <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12.5px"><span><b>3.</b> Тяжкість інсульту</span><span>Бал за NIHSS <span style="display:inline-block;min-width:60px;border:1px solid #000;text-align:center;font-weight:700;padding:2px">${nA}</span></span><span>Бал за ASPECTS <span style="display:inline-block;min-width:60px;border:1px solid #000;text-align:center;font-weight:700;padding:2px">${a??''}</span></span></div>
+  ${q(4,'Протипоказання до тромболізису',C)}
+  <div style="font-size:11.5px;margin-top:4px">Якщо «Так», які саме протипоказання?</div>
+  <div style="font-size:11px;line-height:1.3">${cl.length? cl.map(t=>line(esc(t))).join('') : line('')+line('')}</div>
+  ${q(5,'Оклюзія крупних гілок церебральних артерій (за даними КТ-ангіографії)',dec.lvo)}
+  ${line(dec.lvo?esc(lvoText()):'')}
+  ${q(6,'Ознаки набряку мозку із зміщенням серединних структур (≥5 мм)',dec.edema)}
+  ${line('')}
+  <div style="margin-top:14px;font-weight:700;font-size:14px">Клінічне рішення</div>
+  <table style="margin-top:4px"><tr>${DECS.slice(0,2).map(([k,t])=>`<td style="padding:6px 8px;width:50%"><span class="box" style="font-size:15px">${bx(d[k])}</span> ${t}</td>`).join('')}</tr>
+  <tr>${DECS.slice(2).map(([k,t])=>`<td style="padding:6px 8px"><span class="box" style="font-size:15px">${bx(d[k])}</span> ${t}</td>`).join('')}</tr></table>
+  <div style="margin-top:12px;font-size:13px"><b>Госпіталізація пацієнта у відділення</b> <span style="display:inline-block;min-width:220px;border-bottom:1px solid #000">${esc(dec.other?'':deptAuto())}</span>
+   <b>Час</b> <span style="display:inline-block;min-width:40px;border-bottom:1px solid #000;text-align:center">${dec.other?'':esc((meta.admT||'').split(':')[0]||'')}</span> год. <span style="display:inline-block;min-width:40px;border-bottom:1px solid #000;text-align:center">${dec.other?'':esc((meta.admT||'').split(':')[1]||'')}</span> хв.</div>
+  <div style="margin-top:8px;font-size:13px"><b>Або направлений на лікування до іншого закладу ОЗ</b> <span style="display:inline-block;min-width:260px;border-bottom:1px solid #000">${esc(dec.other)}</span></div>
+  <table style="margin-top:14px"><tr><th>ПІБ лікаря</th><th style="width:120px">Особистий номер</th><th style="width:140px">Підпис</th><th style="width:100px">Дата</th></tr>
+  <tr style="height:34px"><td>${esc(meta.doc)}</td><td class="gt">${esc(docNo)}</td><td></td><td class="gt">${meta.doc?esc(fmtD(meta.adm)):''}</td></tr>
+</table>
+  </div>`;
+  return h;
+}
+
+/* =================== Google Диск =================== */
+const GD='Google Drive', ROOT_NAME='Шкали інсульт v3', FOLDER='application/vnd.google-apps.folder';
+let gdBusy=false, gdLast=null;
+const qq=v=>String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+function gdLinkHTML(){ return `<div class="verdict ok" style="margin-top:8px">Збережено на Google Диск: ${esc(gdLast.title)}<small><a href="${esc(gdLast.url)}" target="_blank" rel="noopener">Відкрити файл</a>${gdLast.folder?` · <a href="${esc(gdLast.folder)}" target="_blank" rel="noopener">${gdLast.sub?'Папка пацієнта':'Папка «Шкали інсульт v3»'}</a>`:''}</small></div>`; }
+function gdErr(e){
+  const c=e&&e.code;
+  if(c==='server_not_connected') return 'Google Диск не під’єднано: додайте його в claude.ai → Налаштування → Конектори.';
+  if(c==='needs_reauth') return 'Потрібно заново під’єднати Google Диск у claude.ai → Налаштування → Конектори.';
+  if(c==='approval_required'||c==='not_in_manifest'||c==='consent_required') return 'Додаток не отримав дозволу на Google Диск. Натисніть кнопку ще раз і дозвольте доступ.';
+  if(c==='blocked_by_policy') return 'Доступ до Google Диска заблоковано налаштуваннями організації.';
+  if(c==='server_unavailable'||c==='upstream_error') return 'Google Диск не відповів. Перевірте папку на Диску — файл міг зберегтися — і за потреби повторіть.';
+  if(c==='tool_error') return 'Google Диск повернув помилку: '+((e.message||'').slice(0,160));
+  return 'Не вдалося зберегти на Google Диск'+(c?' ('+c+')':'')+(e&&e.message?': '+String(e.message).slice(0,160):'')+'.';
+}
+async function gdCall(mcp,tool,input){ const r=await mcp.callTool(GD,tool,input,{cache:false}); return r&&r.payload!==undefined? r.payload : r; }
+async function gdFind(mcp,query){ const p=await gdCall(mcp,'search_files',{query,excludeContentSnippets:true,pageSize:50}); return (p&&p.files)||[]; }
+async function gdRoot(mcp){
+  const f=(await gdFind(mcp,`title = '${qq(ROOT_NAME)}' and mimeType = '${FOLDER}' and trashed = false and owner = 'me'`))
+    .filter(x=>x.title===ROOT_NAME&&!x.trashed)
+    .sort((a,b)=>(a.createdTime||'').localeCompare(b.createdTime||''));
+  if(f.length) return f[0];
+  return await gdCall(mcp,'create_file',{title:ROOT_NAME,contentMimeType:FOLDER});
+}
+function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+async function saveToDrive(){
+  if(gdBusy) return;
+  const sel=selSheets(); if(!sel.length){ toast('Оберіть хоча б один бланк'); return; }
+  const name=$('pt').value.trim();
+  if(!name||!/^\d{4}$/.test(meta.year)){ toast('Вкажіть прізвище та рік народження'); return; }
+  let mcp=null; try{ mcp=(window.claude&&window.claude.use)? await window.claude.use('mcp'):null; }catch(_){}
+  if(!mcp){ toast('Google Диск недоступний у цьому вікні'); return; }
+  gdBusy=true; const b=$('gdrive'); const setB=t=>{ const x=$('gdrive'); if(x) x.textContent=t; };
+  if(b) b.disabled=true;
+  try{
+    setB('Шукаю папку…');
+    const root=await gdRoot(mcp);
+    const base=`${name}, ${meta.year}`.replace(/[\\/:*?"<>|]/g,'_');
+    const old=(await gdFind(mcp,`parentId = '${qq(root.id)}' and mimeType = 'application/pdf' and trashed = false and title contains '${qq(name.replace(/[\\/:*?"<>|]/g,'_'))}'`))
+      .filter(o=>(o.title||'').startsWith(base+'_'));
+    const d=new Date(), p=n=>String(n).padStart(2,'0');
+    const stamp=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
+    const LIMIT=700000; /* Диск через Claude приймає PDF лише як base64 до ~1 МБ */
+    const SHORT={tlt:'ТЛТ',nihss:'NIHSS',gcsmrs:'ШКГ-mRS',four:'FOUR',guss:'GUSS'};
+    const upload=async(title,blob,parent)=>gdCall(mcp,'create_file',{title,parentId:parent||root.id,contentMimeType:'application/pdf',disableConversionToGoogleType:true,base64Content:await blobToB64(blob)});
+    setB('Готую PDF…');
+    let one=await buildPDF(sel,1.6,0.7);
+    const made=[]; let sub=null;
+    const oldSub=(await gdFind(mcp,`parentId = '${qq(root.id)}' and mimeType = '${FOLDER}' and trashed = false and title = '${qq(base)}'`)).filter(f=>f.title===base);
+    if(one.size<=LIMIT){
+      setB('Завантажую…');
+      const title=`${base}_${stamp}.pdf`; const nf=await upload(title,one); if(!nf||!nf.id) throw {code:'tool_error',message:'Диск не повернув файл'}; made.push({title,nf});
+    }else{
+      /* усі бланки разом завеликі — окрема папка пацієнта, кожен бланк окремим PDF */
+      setB('Створюю папку пацієнта…');
+      sub=oldSub[0]||await gdCall(mcp,'create_file',{title:base,contentMimeType:FOLDER,parentId:root.id});
+      const oldIn=await gdFind(mcp,`parentId = '${qq(sub.id)}' and mimeType = 'application/pdf' and trashed = false`);
+      old.push(...oldIn);
+      for(let i=0;i<sel.length;i++){
+        setB(`Завантажую ${i+1} з ${sel.length}…`);
+        let part=await buildPDF([sel[i]],1.8,0.75); if(part.size>LIMIT) part=await buildPDF([sel[i]],1.4,0.6);
+        if(part.size>LIMIT) throw {code:'too_big'};
+        const title=`${base}_${stamp}_${SHORT[sel[i]]||sel[i]}.pdf`; const nf=await upload(title,part,sub.id);
+        if(!nf||!nf.id) throw {code:'tool_error',message:'Диск не повернув файл'}; made.push({title,nf});
+      }
+    }
+    const ids=new Set(made.map(m=>m.nf.id)); let trashed=0;
+    for(const o of old){ if(!ids.has(o.id)){ try{ await gdCall(mcp,'trash_file',{fileId:o.id}); trashed++; }catch(_){} } }
+    if(!sub){ for(const f of oldSub){ try{ await gdCall(mcp,'trash_file',{fileId:f.id}); trashed++; }catch(_){} } }
+    const nf=made[0].nf;
+    gdLast={title: made.length>1? `${made.length} файли (${base}_${stamp}_…)` : made[0].title, url:nf.viewUrl||`https://drive.google.com/file/d/${nf.id}/view`,folder:sub? (sub.viewUrl||`https://drive.google.com/drive/folders/${sub.id}`) : (root.viewUrl||`https://drive.google.com/drive/folders/${root.id}`), sub:!!sub};
+    if($('gdres')) $('gdres').innerHTML=gdLinkHTML();
+    toast((made.length>1?`Збережено ${made.length} файли`:'Збережено на Google Диск')+(trashed?'; стару версію перенесено в кошик':''));
+  }catch(e){
+    const msg= e&&e.code==='too_big' ? 'Файл завеликий для цього вікна — оберіть менше бланків.' : gdErr(e);
+    if($('gdres')) $('gdres').innerHTML=`<div class="verdict bad" style="margin-top:8px">${esc(msg)}</div>`;
+  }finally{ gdBusy=false; const x=$('gdrive'); if(x){ x.disabled=false; x.textContent='☁ Зберегти PDF на Google Диск'; } }
+}
+
+/* =================== хмара =================== */
+let DB=null, ME=null, archive=null, archQ='', archErr='', saveTimer=null, saving=false, syncMsg='', lastDoctorName=null;
+function ptLabel(){ const n=$('pt').value.trim(); return n+(meta.year?`, ${meta.year} р.н.`:''); }
+function newId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function summaryText(){
+  const L=[];
+  DYN.forEach(k=>{ const f=filled(k); if(f.length){ const c=f[f.length-1]; L.push(`${SCALES[k].name} ${scoreStr(k,c)}`+(f.length>1?` (${SCALES[k].cols[c]})`:'')); } });
+  const g=gussState(); if(g.any) L.push('GUSS '+g.total);
+  const t=tltState(); if(t.n) L.push('ТЛТ: '+(t.absY?'протипоказ.':t.relY?'відн. протипоказ.':t.all?'без протипоказ.':'не завершено'));
+  return L.join(' · ');
+}
+function serialize(){
+  const tsS={}; DYN.forEach(k=>{ tsS[k]={}; Object.entries(ts[k]).forEach(([c,v])=>{ if(v) tsS[k][c]=v; }); });
+  const n=$('pt').value.trim();
+  return {name:n, nameLC:n.toLowerCase(), year:meta.year, adm:meta.adm, admT:meta.admT, tm, dec, doc:meta.doc, data, ts:tsS, guss, gussDT, tlt, tltTime, tltDT, summary:summaryText()};
+}
+function canSave(){ return DB&&ME&&!rec.readonly&&$('pt').value.trim()&&/^\d{4}$/.test(meta.year); }
+function setSync(){
+  const el=$('sync'); if(!el) return;
+  el.className='sync'+(rec.readonly?' ro':'');
+  if(rec.readonly){ el.textContent='👁 Запис колеги — лише перегляд і друк'; return; }
+  if(!DB){ el.textContent= dbTried?'Сховище браузера недоступне — дані не зберігаються':''; return; }
+  if(!$('pt').value.trim()||!/^\d{4}$/.test(meta.year)){ el.textContent='💾 Вкажіть прізвище та рік народження — тоді таблиці збережуться на цьому пристрої'; return; }
+  el.textContent=syncMsg||'💾 Збереження…';
+}
+function scheduleSave(){
+  setSync();
+  if(!canSave()) return;
+  clearTimeout(saveTimer); saveTimer=setTimeout(saveNow,1200);
+}
+async function saveNow(){
+  clearTimeout(saveTimer);
+  if(!canSave()||saving) return;
+  const body=serialize(), js=JSON.stringify(body);
+  if(js===lastSavedJSON){ if(!syncMsg) syncMsg='💾 Збережено на пристрої'; setSync(); return; }
+  saving=true;
+  try{
+    if(!rec.id){ rec.id=newId(); rec.author=ME; rec.created=new Date().toISOString(); }
+    await DB.doc(`pts/${ME}/p/${rec.id}`).set({...body, author:ME, created:rec.created, upd:new Date().toISOString()});
+    lastSavedJSON=js;
+    if(meta.doc!==lastDoctorName){ try{ await DB.doc(`pts/${ME}`).set({doc:meta.doc, upd:new Date().toISOString()}); lastDoctorName=meta.doc; }catch(_){} }
+    const d=new Date(); syncMsg=`💾 Збережено на пристрої о ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    if(archive){ const i=archive.findIndex(r=>r.id===rec.id&&r.author===ME); const row={id:rec.id,author:ME,...body,upd:d.toISOString()}; if(i>=0) archive[i]=row; else archive.unshift(row); }
+  }catch(e){
+    syncMsg= e&&e.code==='quota_exceeded'?'⚠ Сховище заповнене — видаліть старі записи':'⚠ Не вдалося зберегти — спробую ще раз';
+    if(!(e&&(e.code==='quota_exceeded'||e.code==='invalid_argument'||e.code==='revoked'))) setTimeout(scheduleSave,4000);
+  }finally{ saving=false; setSync(); }
+}
+async function newPatient(){
+  await saveNow();
+  fresh(); lastFill=null; gdLast=null; $('pt').value=''; $('yr').value=''; $('adm').value=meta.adm; $('admt').value=''; syncMsg=''; tab='nihss'; render(); window.scrollTo(0,0); toast('Новий пацієнт');
+}
+function loadInto(r){
+  fresh();
+  $('pt').value=r.name||''; meta.year=r.year||''; $('yr').value=meta.year; meta.adm=r.adm||meta.adm; $('adm').value=meta.adm; meta.admT=r.admT||''; $('admt').value=meta.admT; tm=Object.assign({onset:'',ct:'',needle:'',weight:''},r.tm||{}); dec=Object.assign(JSON.parse(JSON.stringify(DEC0)),JSON.parse(JSON.stringify(r.dec||{})));
+  if(r.doc) meta.doc=r.doc;
+  DYN.forEach(k=>{ data[k]=JSON.parse(JSON.stringify((r.data&&r.data[k])||{})); ts[k]={};
+    /* старі автоматичні мітки (ISO з 'Z') ігноруємо — лише час, вибраний лікарем */
+    Object.entries((r.ts&&r.ts[k])||{}).forEach(([c,v])=>{ if(typeof v==='string'&&/^\d{4}-\d\d-\d\d$/.test(v)) ts[k][c]=v; });
+    const f=filled(k); cur[k]=f.length?f[f.length-1]:0; });
+  guss=Object.assign({p1:{},semi:{},liq:{},sol:{}},JSON.parse(JSON.stringify(r.guss||{})));
+  gussDT=r.gussDT||gussDT; tlt=JSON.parse(JSON.stringify(r.tlt||{})); tltTime=(r.tltTime===undefined?null:r.tltTime); tltDT=r.tltDT||tltDT;
+  rec={id:r.id,author:r.author,created:r.created||null,readonly:r.author!==ME};
+  lastSavedJSON=JSON.stringify(serialize()); syncMsg='💾 Збережено на пристрої';
+  if(!rec.readonly && r.doc) lastDoctorName=null;
+}
+async function openRecord(key){
+  const r=(archive||[]).find(x=>x.author+'/'+x.id===key); if(!r) return;
+  await saveNow();
+  loadInto(r); lastFill=null; gdLast=null; tab='nihss'; render(); window.scrollTo(0,0);
+  toast(rec.readonly?'Відкрито запис колеги (лише перегляд)':'Пацієнта відкрито');
+}
+async function deleteRecord(key,btn){
+  if(btn.dataset.sure!=='1'){ btn.dataset.sure='1'; btn.textContent='Точно видалити?'; setTimeout(()=>{ if(btn.isConnected){ btn.dataset.sure=''; btn.textContent='Видалити'; } },3500); return; }
+  const r=(archive||[]).find(x=>x.author+'/'+x.id===key); if(!r||r.author!==ME) return;
+  try{ await DB.doc(`pts/${ME}/p/${r.id}`).delete(); archive=archive.filter(x=>x!==r);
+    if(rec.id===r.id&&rec.author===ME){ rec.id=null; lastSavedJSON=null; syncMsg=''; }
+    toast('Запис видалено'); drawArchive(); }
+  catch(e){ toast('Не вдалося видалити'); }
+}
+let archLoading=false;
+async function loadArchive(){
+  if(!DB){ archErr= dbTried?'Сховище браузера недоступне.':'Завантаження…'; drawArchive(); return; }
+  archLoading=true; archErr=''; drawArchive();
+  const timer=setTimeout(()=>{ if(archLoading){ archErr='Хмара не відповідає — перевірте інтернет і натисніть «Оновити».'; drawArchive(); } },10000);
+  try{
+    const docs=await DB.collection('pts').get();
+    const ids=new Set(docs.docs.map(d=>d.id)); if(ME) ids.add(ME);
+    const names={}; docs.docs.forEach(d=>{ names[d.id]=(d.data()||{}).doc||''; });
+    const all=[];
+    for(const uid of ids){
+      try{ const q=await DB.collection(`pts/${uid}/p`).orderBy('upd','desc').limit(500).get();
+        q.docs.forEach(d=>{ const v=d.data(); if(v) all.push({...v,id:d.id,author:uid,docName:v.doc||names[uid]||''}); }); }catch(_){}
+    }
+    all.sort((a,b)=>(b.upd||'').localeCompare(a.upd||''));
+    archive=all; archErr='';
+  }catch(e){ archErr='Не вдалося завантажити список. Натисніть «Оновити».'; }
+  finally{ clearTimeout(timer); archLoading=false; drawArchive(); }
+}
+function renderPatients(){
+  if(archive===null&&!archLoading) setTimeout(loadArchive,0);
+  return `<div class="row" style="margin-bottom:10px"><input type="text" data-q placeholder="🔍 Пошук за прізвищем або роком" value="${esc(archQ)}" autocomplete="off"><button class="btn" data-reload>Оновити</button></div><div id="plist"></div>`;
+}
+function drawArchive(){
+  const el=$('plist'); if(!el) return;
+  if(archLoading&&!archive){ el.innerHTML=`<p class="note">Завантаження…</p>${archErr?`<p class="note">${esc(archErr)}</p>`:''}`; return; }
+  if(archErr&&!archive){ el.innerHTML=`<p class="note">${esc(archErr)}</p>`; return; }
+  const q=archQ.trim().toLowerCase();
+  const rows=(archive||[]).filter(r=>!q||(r.nameLC||'').includes(q)||(r.year||'').includes(q));
+  if(!rows.length){ el.innerHTML=`<p class="note">${archive&&archive.length?'Нічого не знайдено.':'Ще немає збережених пацієнтів. Вкажіть прізвище та рік народження у верхньому рядку — таблиці збережуться автоматично.'}</p>`; return; }
+  el.innerHTML=(archErr?`<p class="note">${esc(archErr)}</p>`:'')+rows.slice(0,200).map(r=>{
+    const mine=r.author===ME, key=r.author+'/'+r.id, isCur=rec.id===r.id&&rec.author===r.author;
+    const upd=r.upd?new Date(r.upd):null, p=n=>String(n).padStart(2,'0');
+    const u=upd?`${p(upd.getDate())}.${p(upd.getMonth()+1)} ${p(upd.getHours())}:${p(upd.getMinutes())}`:'';
+    return `<div class="prow ${isCur?'cur':''}" data-open="${esc(key)}"><b>${esc(r.name)}</b>${r.year?`, ${esc(r.year)} р.н.`:''}<span class="tag ${mine?'':'o'}">${mine?'мій':'колега'}</span>
+      <div class="m">Госп.: ${esc(fmtD(r.adm||''))}${r.docName?' · Лікар: '+esc(r.docName):''} · змінено ${u}</div>
+      ${r.summary?`<div class="m">${esc(r.summary)}</div>`:''}
+      ${mine?`<div style="text-align:right;margin-top:4px"><button class="btn" style="padding:5px 10px;font-size:13px" data-del="${esc(key)}">Видалити</button></div>`:''}</div>`;
+  }).join('');
+}
+function applyRO(){
+  const ro=rec.readonly;
+  ['pt','yr','adm','admt'].forEach(id=>{ const el=$(id); if(el) el.disabled=ro; });
+  document.querySelectorAll('[data-m],[data-gdt],[data-tdt],[data-cdt],[data-tm],[data-ddx],[data-dlvo],[data-ddept],[data-dother],[data-daspv],[data-dasr]').forEach(el=>{ if(el.dataset.m!=='doc'||ro) el.disabled=ro; });
+  setSync();
+  if(tab==='pts') drawArchive();
+}
+let dbTried=false;
+function localDB(){
+  const K='shkaly_pts_v1';
+  const load=()=>{ try{ return JSON.parse(localStorage.getItem(K)||'{}'); }catch(_){ return {}; } };
+  const store=o=>{ try{ localStorage.setItem(K,JSON.stringify(o)); }catch(e){ const er=new Error('quota'); er.code='quota_exceeded'; throw er; } };
+  const snap=(id,v)=>({id,data:()=>v});
+  return {
+    doc(path){ return {
+      async set(v){ const o=load(); o[path]=v; store(o); },
+      async delete(){ const o=load(); delete o[path]; store(o); } }; },
+    collection(path){ const get=async()=>{ const o=load(), pre=path+'/';
+        const ids=new Set(); Object.keys(o).forEach(k=>{ if(k.startsWith(pre)){ const r=k.slice(pre.length); if(!r.includes('/')) ids.add(r); else ids.add(r.split('/')[0]); } });
+        return {docs:[...ids].map(id=>snap(id,o[pre+id]||{}))}; };
+      const q={get, orderBy(){return q;}, limit(){return q;}}; return q; }
+  };
+}
+(async()=>{
+  try{
+    if(!(window.claude&&window.claude.use)){ DB=localDB(); ME='local'; }
+    else{
+      const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+      if(db&&user){ const id=await user.id(); if(id){ DB=db; ME=id; } }
+    }
+  }catch(_){}
+  if(!DB){ try{ localStorage.setItem('_t','1'); localStorage.removeItem('_t'); DB=localDB(); ME='local'; }catch(_){} }
+  dbTried=true; setSync(); if(tab==='pts') loadArchive(); else scheduleSave();
+})();
+
+/* =================== події =================== */
+function scrollNext(sel){
+  setTimeout(()=>{
+    const el=document.querySelector(sel); if(!el) return;
+    const top=document.querySelector('header').getBoundingClientRect().bottom+8;
+    const barTop=document.querySelector('.bar').getBoundingClientRect().top;
+    const r=el.getBoundingClientRect();
+    /* наступний пункт уже видно повністю (або його верх і перші варіанти) — не крутимо */
+    if(r.top>=top && Math.min(r.bottom,r.top+170)<=barTop-8) return;
+    window.scrollTo({top:window.scrollY+r.top-top,behavior:'smooth'});
+  },60);
+}
+const MUT='[data-cdtclr],[data-gfill],.opt[data-k],[data-gp],[data-gclear],[data-tl],[data-tt],[data-tall],[data-tclear],[data-fill],[data-unfill],[data-clear]';
+document.addEventListener('click',e=>{
+  if(rec.readonly && e.target.closest(MUT)){ toast('Запис колеги — лише перегляд'); return; }
+  const dl=e.target.closest('[data-del]');
+  if(dl){ deleteRecord(dl.dataset.del,dl); return; }
+  const pr=e.target.closest('[data-open]');
+  if(pr){ openRecord(pr.dataset.open); return; }
+  if(e.target.closest('[data-reload]')){ loadArchive(); return; }
+  const o=e.target.closest('.opt[data-k]');
+  if(o){
+    const k=o.dataset.k,i=o.dataset.i,c=cur[k]; let v=o.dataset.v; v=(v==='T')?v:Number(v);
+    lastFill=null; data[k][c]=data[k][c]||{};
+    if(data[k][c][i]===v) delete data[k][c][i]; else { data[k][c][i]=v; if(c>0&&!ts[k][c]) ts[k][c]=todayISO(); }
+    if(!answered(k,c)) delete ts[k][c];
+    render(true);
+    if(data[k][c][i]!==undefined){ const nx=SCALES[k].items.find(it=>cell(k,c)[it.id]===undefined); if(nx) scrollNext(`#it-${k}-${nx.id}`); }
+    return;
+  }
+  const col=e.target.closest('[data-col]');
+  if(col){ cur[tab]=Number(col.dataset.col); render(true); return; }
+  const gp=e.target.closest('[data-gp]');
+  if(gp){
+    const p=gp.dataset.gp,i=gp.dataset.gi,v=Number(gp.dataset.gv);
+    if(guss[p][i]===v) delete guss[p][i]; else guss[p][i]=v;
+    /* скинути наступні етапи, якщо поточний перестав давати 5 */
+    const order=['p1','semi','liq','sol'];
+    for(let j=0;j<3;j++){ const a=order[j]; if(!(gDone(a)&&gSum(a)===5)){ order.slice(j+1).forEach(x=>guss[x]={}); break; } }
+    render(true); return;
+  }
+  const DM='[data-dyn],[data-dbasin],[data-dbside],[data-dasp],[data-dart],[data-daside],[data-ddec],[data-ddecreset],[data-ddxreset]';
+  const dz=e.target.closest(DM);
+  if(dz){
+    if(rec.readonly){ toast('Запис колеги — лише перегляд'); return; }
+    const D=dz.dataset;
+    if(D.dyn){ const v=D.v==='1'; if(D.dyn==='ich'){ const cur=ich(); if(cur===v) delete tlt.a1; else tlt.a1=v?'y':'n'; } else { dec[D.dyn]= dec[D.dyn]===v? null : v; if(D.dyn==='lvo'&&!dec.lvo){ dec.art=''; dec.aside=''; dec.lvoEdit=null; } } }
+    else if(D.dbasin){ dec.basin= autoBasin()[0]===D.dbasin&&dec.basin? '' : D.dbasin; dec.dxEdit=null; }
+    else if(D.dbside){ dec.bside= dec.bside===D.dbside?'':D.dbside; if(!dec.basin) dec.basin=autoBasin()[0]; dec.dxEdit=null; }
+    else if(D.dasp){ dec.asp.mode=D.dasp; syncAsp(); }
+    else if(D.dart){ dec.art= dec.art===D.dart?'':D.dart; dec.lvoEdit=null; dec.dxEdit=null; }
+    else if(D.daside){ dec.aside= dec.aside===D.daside?'':D.daside; dec.lvoEdit=null; dec.dxEdit=null; }
+    else if(D.ddec){ const d=Object.assign({},decisions()); d[D.ddec]=!d[D.ddec]; dec.decided=d; }
+    else if(D.ddecreset!==undefined){ dec.decided=null; }
+    else if(D.ddxreset!==undefined){ dec.dxEdit=null; }
+    render(true); scheduleSave(); return;
+  }
+  const gf=e.target.closest('[data-gfill]');
+  if(gf){ const v=gf.dataset.gfill; gussFill(v==='all'?['p1','semi','liq','sol']:[v]); render(true); toast(v==='all'?'GUSS: 20 балів':'Етап заповнено'); return; }
+  if(e.target.closest('[data-gclear]')){ guss={p1:{},semi:{},liq:{},sol:{}}; render(); window.scrollTo(0,0); return; }
+  const tl=e.target.closest('[data-tl]');
+  if(tl){ const id=tl.dataset.tl,v=tl.dataset.tv; if(tlt[id]===v) delete tlt[id]; else tlt[id]=v; render(true); return; }
+  const tt=e.target.closest('[data-tt]');
+  if(tt){ const i=Number(tt.dataset.tt); tltTime= tltTime===i?null:i; render(true); return; }
+  if(e.target.closest('[data-tall]')){ TLT_FLAT.forEach(x=>{ if(tlt[x.id]===undefined) tlt[x.id]='n'; }); render(true); return; }
+  if(e.target.closest('[data-tclear]')){ tlt={}; tltTime=null; render(); return; }
+  const t=e.target.closest('[data-t]');
+  if(t){ tab=t.dataset.t; render(); window.scrollTo(0,0); return; }
+  const fb=e.target.closest('[data-fill]');
+  if(fb){ const k=tab; const to= fb.dataset.fill==='sel'? Number($('fillsel').value) : Number(fb.dataset.fill); fillTo(k,to); render(true); return; }
+  if(e.target.closest('[data-unfill]')){ if(lastFill){ lastFill.cols.forEach(i=>{ delete data[lastFill.k][i]; delete ts[lastFill.k][i]; }); toast('Заповнення скасовано'); lastFill=null; } render(true); return; }
+  if(e.target.closest('[data-cdtclr]')){ delete ts[tab][cur[tab]]; render(true); return; }
+  const c=e.target.closest('[data-clear]');
+  if(c){ const k=c.dataset.clear; delete data[k][cur[k]]; delete ts[k][cur[k]]; render(true); return; }
+  const id=e.target.closest('button')?.id;
+  if(id==='copy'){ copy(); return; }
+  if(id==='pdf'||id==='pdf2'){ makePDF(); return; }
+  if(id==='gdrive'){ saveToDrive(); return; }
+  if(id==='reset'||id==='reset2'){ newPatient(); return; }
+});
+document.addEventListener('input',e=>{
+  const m=e.target.dataset.m;
+  if(m){ meta[m]=e.target.value; if(m==='doc'){ try{localStorage.setItem('doc',meta.doc);}catch(_){} } refreshReport(); }
+  if(e.target.id==='pt'||e.target.id==='yr'){ if(e.target.id==='yr'){ meta.year=e.target.value.replace(/\D/g,'').slice(0,4); } refreshReport(); scheduleSave(); }
+  if(e.target.dataset.q!==undefined){ archQ=e.target.value; drawArchive(); }
+  if(e.target.dataset.cdt!==undefined){ if(rec.readonly){ e.target.value=ts[tab][cur[tab]]||''; return; } if(e.target.value) ts[tab][cur[tab]]=e.target.value; else delete ts[tab][cur[tab]]; scheduleSave(); }
+  if(e.target.id==='adm'){ meta.adm=e.target.value; refreshReport(); scheduleSave(); }
+  if(e.target.id==='admt'){ meta.admT=e.target.value; refreshReport(); scheduleSave(); }
+  { const D=e.target.dataset; if(D.ddx!==undefined||D.dlvo!==undefined||D.ddept!==undefined||D.dother!==undefined||D.daspv!==undefined||D.ddocno!==undefined){
+    if(rec.readonly&&D.ddocno===undefined){ return; }
+    if(D.ddx!==undefined) dec.dxEdit=e.target.value;
+    if(D.dlvo!==undefined) dec.lvoEdit=e.target.value;
+    if(D.ddept!==undefined) dec.dept=e.target.value;
+    if(D.dother!==undefined) dec.other=e.target.value;
+    if(D.ddocno!==undefined){ docNo=e.target.value; try{ localStorage.setItem('docno',docNo); }catch(_){} }
+    if(D.daspv!==undefined){ dec.asp.val=e.target.value.replace(/\D/g,'').slice(0,2); syncAsp(); }
+    renderBar(); scheduleSave(); } }
+  if(e.target.dataset.tm){ if(rec.readonly){ e.target.value=tm[e.target.dataset.tm]||''; return; } tm[e.target.dataset.tm]=e.target.value; scheduleSave(); }
+  if(e.target.dataset.gdt!==undefined) gussDT=e.target.value;
+  if(e.target.dataset.tdt!==undefined) tltDT=e.target.value;
+  if(m||e.target.dataset.gdt!==undefined||e.target.dataset.tdt!==undefined) scheduleSave();
+});
+document.addEventListener('change',e=>{
+  if(e.target.dataset.dasr){ if(rec.readonly){ e.target.checked=!e.target.checked; return; } dec.asp.reg[e.target.dataset.dasr]=e.target.checked; syncAsp(); render(true); scheduleSave(); return; }
+  if(e.target.dataset.daspv!==undefined){ render(true); return; }
+  if(e.target.dataset.tm||e.target.id==='adm'||e.target.id==='admt'){ syncWindow(); if(tab==='time'||tab==='tlt') render(true); else renderTabs(); }
+  if(e.target.dataset.m){ meta[e.target.dataset.m]=e.target.value; refreshReport(); }
+  if(e.target.dataset.ps){ printSel[e.target.dataset.ps]=e.target.checked; refreshReport(); renderBar(); }
+});
+window.addEventListener('resize',fitPreview);
+$('adm').value=meta.adm;
+render();
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
+</body>
+</html>
