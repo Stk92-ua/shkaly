@@ -123,7 +123,9 @@ main{padding:12px 12px 4px;max-width:820px;margin:0 auto}
   </div>
   <div class="row" style="align-items:center;margin-top:6px">
     <label for="adm" style="font-size:13px;color:var(--muted);white-space:nowrap">Дата госп.:</label>
-    <input type="date" id="adm" style="flex:0 0 138px;padding:6px 6px;font-size:14px">
+    <input type="text" id="admTxt" inputmode="numeric" maxlength="10" placeholder="ДД.ММ.РРРР" autocomplete="off" title="Дата госпіталізації (ДД.ММ.РРРР)" style="flex:0 0 116px;padding:6px 8px;font-size:14px">
+    <button class="btn" id="admCal" type="button" title="Обрати в календарі" style="padding:5px 8px;font-size:15px">📅</button>
+    <input type="date" id="adm" tabindex="-1" aria-hidden="true" style="position:absolute;opacity:0;width:1px;height:1px;padding:0;border:0;pointer-events:none">
     <input type="time" id="admt" title="Час огляду при поступленні (необов’язково)" style="flex:0 0 100px;padding:6px 6px;font-size:14px">
   </div>
   <div class="sync" id="sync"></div>
@@ -323,6 +325,7 @@ function fmtDT(v){ if(!v) return ''; const [d,t]=v.split('T'); const [y,m,dd]=d.
 function fmtD(v){ if(!v) return ''; const [y,m,d]=v.slice(0,10).split('-'); return `${d}.${m}.${y}`; }
 function dShort(v){ if(!v||typeof v!=='string'||v.includes('T')) return ''; const [y,m,d]=v.split('-'); return `${d}.${m}<br>${y.slice(2)}`; }
 function todayISO(){ return nowLocal().slice(0,10); }
+function admShow(){ const x=$('admTxt'); if(x) x.value=fmtD($('adm').value); }
 function admStr(){ return fmtD(meta.adm)+(meta.admT?' '+meta.admT:''); }
 function admShort(){ if(!meta.adm) return ''; const [y,m,d]=meta.adm.split('-'); return `${d}.${m}`+(meta.admT?'<br>'+meta.admT:''); }
 function stampShort(v){ if(!v||typeof v!=='string') return ''; const [d,t]=v.split('T'); const [y,m,dd]=d.split('-'); return `${dd}.${m}${t?'<br>'+t:''}`; }
@@ -1058,11 +1061,11 @@ async function saveNow(){
 }
 async function newPatient(){
   await saveNow();
-  fresh(); lastFill=null; gdLast=null; $('pt').value=''; $('yr').value=''; $('adm').value=meta.adm; $('admt').value=''; syncMsg=''; tab='nihss'; render(); window.scrollTo(0,0); toast('Новий пацієнт');
+  fresh(); lastFill=null; gdLast=null; $('pt').value=''; $('yr').value=''; $('adm').value=meta.adm; admShow(); $('admt').value=''; syncMsg=''; tab='nihss'; render(); window.scrollTo(0,0); toast('Новий пацієнт');
 }
 function loadInto(r){
   fresh();
-  $('pt').value=r.name||''; meta.year=r.year||''; $('yr').value=meta.year; meta.adm=r.adm||meta.adm; $('adm').value=meta.adm; meta.admT=r.admT||''; $('admt').value=meta.admT; tm=Object.assign({onset:'',ct:'',needle:'',weight:''},r.tm||{}); dec=Object.assign(JSON.parse(JSON.stringify(DEC0)),JSON.parse(JSON.stringify(r.dec||{})));
+  $('pt').value=r.name||''; meta.year=r.year||''; $('yr').value=meta.year; meta.adm=r.adm||meta.adm; $('adm').value=meta.adm; admShow(); meta.admT=r.admT||''; $('admt').value=meta.admT; tm=Object.assign({onset:'',ct:'',needle:'',weight:''},r.tm||{}); dec=Object.assign(JSON.parse(JSON.stringify(DEC0)),JSON.parse(JSON.stringify(r.dec||{})));
   if(r.doc) meta.doc=r.doc;
   DYN.forEach(k=>{ data[k]=JSON.parse(JSON.stringify((r.data&&r.data[k])||{})); ts[k]={};
     /* старі автоматичні мітки (ISO з 'Z') ігноруємо — лише час, вибраний лікарем */
@@ -1130,7 +1133,7 @@ function drawArchive(){
 }
 function applyRO(){
   const ro=rec.readonly;
-  ['pt','yr','adm','admt'].forEach(id=>{ const el=$(id); if(el) el.disabled=ro; });
+  ['pt','yr','adm','admTxt','admCal','admt'].forEach(id=>{ const el=$(id); if(el) el.disabled=ro; });
   document.querySelectorAll('[data-m],[data-gdt],[data-tdt],[data-cdt],[data-tm],[data-ddx],[data-dlvo],[data-ddept],[data-dother],[data-daspv],[data-dasr]').forEach(el=>{ if(el.dataset.m!=='doc'||ro) el.disabled=ro; });
   setSync();
   if(tab==='pts') drawArchive();
@@ -1242,6 +1245,7 @@ document.addEventListener('click',e=>{
   if(id==='pdf'||id==='pdf2'){ makePDF(); return; }
   if(id==='gdrive'){ saveToDrive(); return; }
   if(id==='reset'||id==='reset2'){ newPatient(); return; }
+  if(id==='admCal'){ if(rec.readonly) return; const a=$('adm'); try{ a.showPicker(); }catch(_){ a.focus(); a.click(); } return; }
 });
 document.addEventListener('input',e=>{
   const m=e.target.dataset.m;
@@ -1249,7 +1253,15 @@ document.addEventListener('input',e=>{
   if(e.target.id==='pt'||e.target.id==='yr'){ if(e.target.id==='yr'){ meta.year=e.target.value.replace(/\D/g,'').slice(0,4); } refreshReport(); scheduleSave(); }
   if(e.target.dataset.q!==undefined){ archQ=e.target.value; drawArchive(); }
   if(e.target.dataset.cdt!==undefined){ if(rec.readonly){ e.target.value=ts[tab][cur[tab]]||''; return; } if(e.target.value) ts[tab][cur[tab]]=e.target.value; else delete ts[tab][cur[tab]]; scheduleSave(); }
-  if(e.target.id==='adm'){ meta.adm=e.target.value; refreshReport(); scheduleSave(); }
+  if(e.target.id==='adm'){ meta.adm=e.target.value; admShow(); refreshReport(); scheduleSave(); }
+  if(e.target.id==='admTxt'){
+    let v=e.target.value.replace(/[^\d]/g,'').slice(0,8);
+    v= v.length>4? v.slice(0,2)+'.'+v.slice(2,4)+'.'+v.slice(4) : v.length>2? v.slice(0,2)+'.'+v.slice(2) : v;
+    if(e.target.value!==v) e.target.value=v;
+    const m=v.match(/^(\d\d)\.(\d\d)\.(\d{4})$/);
+    if(m){ const iso=`${m[3]}-${m[2]}-${m[1]}`, dt=new Date(iso+'T00:00');
+      if(!isNaN(dt)&&dt.getDate()===+m[1]&&dt.getMonth()+1===+m[2]){ $('adm').value=iso; meta.adm=iso; refreshReport(); scheduleSave(); } }
+  }
   if(e.target.id==='admt'){ meta.admT=e.target.value; refreshReport(); scheduleSave(); }
   { const D=e.target.dataset; if(D.ddx!==undefined||D.dlvo!==undefined||D.ddept!==undefined||D.dother!==undefined||D.daspv!==undefined||D.ddocno!==undefined){
     if(rec.readonly&&D.ddocno===undefined){ return; }
@@ -1266,6 +1278,7 @@ document.addEventListener('input',e=>{
   if(m||e.target.dataset.gdt!==undefined||e.target.dataset.tdt!==undefined) scheduleSave();
 });
 document.addEventListener('change',e=>{
+  if(e.target.id==='admTxt'){ if(e.target.value!==fmtD(meta.adm)){ if(e.target.value.trim()) toast('Дата має бути у форматі ДД.ММ.РРРР'); admShow(); } return; }
   if(e.target.dataset.dasr){ if(rec.readonly){ e.target.checked=!e.target.checked; return; } dec.asp.reg[e.target.dataset.dasr]=e.target.checked; syncAsp(); render(true); scheduleSave(); return; }
   if(e.target.dataset.daspv!==undefined){ render(true); return; }
   if(e.target.dataset.tm||e.target.id==='adm'||e.target.id==='admt'){ syncWindow(); if(tab==='time'||tab==='tlt') render(true); else renderTabs(); }
@@ -1273,7 +1286,7 @@ document.addEventListener('change',e=>{
   if(e.target.dataset.ps){ printSel[e.target.dataset.ps]=e.target.checked; refreshReport(); renderBar(); }
 });
 window.addEventListener('resize',fitPreview);
-$('adm').value=meta.adm;
+$('adm').value=meta.adm; admShow();
 render();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
