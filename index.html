@@ -788,6 +788,7 @@ function renderAlteplase(){
   const a=alteplase();
   return `<div class="sec">Калькулятор альтеплази (0,9 мг/кг, макс. 90 мг)</div><div class="item">
     <div class="fld"><label>Маса тіла, кг</label><input type="text" inputmode="decimal" data-tm="weight" value="${esc(tm.weight)}" placeholder="напр. 78"></div>
+    ${a&&(a.w<30||a.w>200)?`<div class="verdict bad" style="margin-top:10px;font-weight:500;font-size:14px">Перевірте масу тіла: ${a.w} кг — схоже на помилку введення</div>`:''}
     ${a?`<div style="margin-top:10px;font-size:15px">Загальна доза: <b>${a.total} мг</b>${a.capped?' <span class="interp">(обмежено максимумом 90 мг)</span>':''}</div>
     <div style="margin-top:6px">Болюс 10%: <b>${a.bolus} мг</b> в/в струминно за 1 хв</div>
     <div style="margin-top:4px">Інфузія 90%: <b>${a.inf} мг</b> протягом 60 хв (${a.inf} мг/год)</div>
@@ -821,7 +822,7 @@ function autoBasin(){ if(dec.basin) return [dec.basin,dec.bside]; if(!dec.art) r
 function dxText(){
   if(dec.dxEdit!==null) return dec.dxEdit;
   const [b,sd]=autoBasin();
-  return 'ГМІ за ішемічним типом'+(b? ` в басейні ${b==='ВББ'?'ВББ':(sd||'')+b}`:'')+(dec.dxExtra?'. '+dec.dxExtra:'');
+  return 'ГМІ за '+(ich()===true?'геморагічним':'ішемічним')+' типом'+(b? ` в басейні ${b==='ВББ'?'ВББ':(sd||'')+b}`:'')+(dec.dxExtra?'. '+dec.dxExtra:'');
 }
 function contraList(){ return TLT_FLAT.filter(x=>tlt[x.id]==='y').map(x=>(x.abs?'Абс. ':'Відн. ')+x.id.slice(1)+'. '+x.t); }
 function contra(){ const s=tltState(); return s.absY||s.relY? true : s.n? false : null; }
@@ -834,7 +835,8 @@ function suggest(){
   else if(w===0){ tltOk=true; R.push([s.relY?'warn':'ok', s.relY?`У вікні ≤4,5 год; є відносні протипоказання (${s.relY}) — рішення щодо вТЛТ індивідуально`:'У вікні ≤4,5 год, абсолютних протипоказань немає — в/в тромболізис (альтеплаза 0,9 мг/кг)']); if(nA!==null&&nA<=4) R.push(['warn',`NIHSS ${nA}: вТЛТ — при потенційно інвалідизуючому інсульті (зазвичай NIHSS >4)`]); }
   else R.push(['warn','Поза «стандартним вікном» вТЛТ (>4,5 год)']);
   const PROX=['ВСА','СМА-M1','СМА-M2','ОА','ХА'];
-  if(dec.lvo===true&&dec.art&&!PROX.includes(dec.art)){ R.push(['warn','Дистальна оклюзія ('+dec.art.replace('СМА-','СМА ')+') — ЕВТ індивідуально, за рішенням з ендоваскулярним хірургом']); }
+  if(I===true){ if(dec.lvo===true) R.push(['bad','Крововилив на КТ — тромбектомія не показана; тактика за протоколом внутрішньочерепного крововиливу']); }
+  else if(dec.lvo===true&&dec.art&&!PROX.includes(dec.art)){ R.push(['warn','Дистальна оклюзія ('+dec.art.replace('СМА-','СМА ')+') — ЕВТ індивідуально, за рішенням з ендоваскулярним хірургом']); }
   else if(dec.lvo===true){
     if(w===0||w===1){ evtOk=true; R.push(['ok','Оклюзія великої судини, ≤6 год — тромбектомія показана; вТЛТ не повинна її затримувати']); }
     else if(w===2){ evtOk=true; R.push(['warn','Оклюзія великої судини, 6–24 год — ЕВТ у «розширеному вікні» за даними перфузійної/мультифазної візуалізації']); }
@@ -843,15 +845,15 @@ function suggest(){
   }
   const a=aspScore(); if(a!==null&&a<6) R.push(['warn',`ASPECTS ${a} (<6) — відносний протипоказ до вТЛТ (ранні ознаки великого інфаркту)`]);
   if(dec.edema===true) R.push(['warn','Набряк зі зміщенням ≥5 мм — розглянути декомпресивну гемікраніектомію, консультація нейрохірурга']);
-  return {R,tltOk:tltOk&&!s.relY,evtOk,dhc:dec.edema===true};
+  return {R,tltOk:tltOk&&!s.relY,evtOk,dhc:dec.edema===true,ich:I===true};
 }
 function decisions(){
   if(dec.decided) return dec.decided;
-  const g=suggest(); return {tlt:g.tltOk, evt:g.evtOk, dhc:g.dhc, basic:!g.tltOk&&!g.evtOk};
+  const g=suggest(); return {tlt:g.tltOk, evt:g.evtOk, dhc:g.dhc, basic:!g.tltOk&&!g.evtOk&&!g.ich};
 }
 function gcsFirst2(){ const f=filled('gcs').filter(c=>complete('gcs',c)); return f.length? total('gcs',f[0]) : null; }
 function deptAuto(){ if(dec.dept) return dec.dept; const g=gcsFirst2(); return g!==null&&g<12? 'анестезіології та інтенсивної терапії' : 'інсультне'; }
-function syncAsp(){ const a=aspScore(); if(a===null) return; if(a<6){ if(tlt.r8!=='y'){ tlt.r8='y'; dec.r8auto=true; } } else if(dec.r8auto){ tlt.r8='n'; dec.r8auto=false; } }
+function syncAsp(){ const a=aspScore(); if(a===null){ if(dec.r8auto){ delete tlt.r8; dec.r8auto=false; } return; } if(a<6){ if(tlt.r8!=='y'){ tlt.r8='y'; dec.r8auto=true; } } else if(dec.r8auto){ tlt.r8='n'; dec.r8auto=false; } }
 function yn(name,val,lbl){ return `<div class="yn" style="margin-top:6px"><button class="y ${val===true?'on':''}" data-dyn="${name}" data-v="1">${lbl&&lbl[0]||'ТАК'}</button><button class="n ${val===false?'on':''}" data-dyn="${name}" data-v="0">${lbl&&lbl[1]||'НІ'}</button></div>`; }
 function renderDec(){
   const nA=complete('nihss',0)?total('nihss',0):null, nPart=answered('nihss',0), a=aspScore(), cl=contraList(), g=suggest(), d=decisions(), C=contra();
