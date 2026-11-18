@@ -79,6 +79,14 @@ main{padding:12px 12px 4px;max-width:820px;margin:0 auto}
 .note{font-size:13px;color:var(--muted);margin:10px 2px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
 .toast.show{opacity:1}
+.akpk{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.akpk .g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.akbtn{display:flex;gap:8px;flex-wrap:wrap}.akbtn label.btn{cursor:pointer}
+.akst{margin-top:8px;font-size:14px}
+.sheet.akt{font-size:15.5px;line-height:1.45;padding:60px 64px}
+.sheet.akt .fl{display:inline-block;border-bottom:1px solid #000;min-width:120px;padding:0 6px;font-family:Arimo,Arial,"Liberation Sans",sans-serif;font-size:14px;line-height:1.3}
+.sheet.akt .ln{border-bottom:1px solid #000;min-height:24px;font-family:Arimo,Arial,"Liberation Sans",sans-serif;font-size:14px;padding:2px 4px 0}
+.sheet.akt p{margin:0 0 16px}
 .upd{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
 .upd .box{background:var(--card);color:var(--ink);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:16px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.25);max-height:85vh;overflow:auto}
 .upd h3{margin:0 0 6px;font-size:18px}.upd .v{color:var(--muted);font-size:13px;margin-bottom:10px}
@@ -301,8 +309,8 @@ TLT.forEach((grp,gi)=>{
   if(grp.sub) grp.sub.forEach(s=>s.items.forEach(it=>push(it,s.s)));
 });
 
-const TABS=[['pts','📁 Пацієнти'],['nihss','NIHSS'],['gcs','ШКГ'],['four','FOUR'],['mrs','mRS'],['guss','GUSS'],['tlt','ТЛТ'],['dec','⚖ Рішення'],['rep','Друк']];
-const SHEETS=[['nihss','NIHSS (динаміка)'],['gcsmrs','ШКГ + mRS (динаміка)'],['four','FOUR (при поступленні)'],['guss','GUSS (ковтання)'],['tlt','Протипоказання до в/в ТЛТ'],['dec','Клінічне рішення лікаря']];
+const TABS=[['pts','📁 Пацієнти'],['nihss','NIHSS'],['gcs','ШКГ'],['four','FOUR'],['mrs','mRS'],['guss','GUSS'],['tlt','ТЛТ'],['dec','⚖ Рішення'],['akt','🧾 Акт'],['rep','Друк']];
+const SHEETS=[['nihss','NIHSS (динаміка)'],['gcsmrs','ШКГ + mRS (динаміка)'],['four','FOUR (при поступленні)'],['guss','GUSS (ковтання)'],['tlt','Протипоказання до в/в ТЛТ'],['dec','Клінічне рішення лікаря'],['akt','Акт знищення залишків Актилізе']];
 
 /* =================== стан =================== */
 let lastSavedJSON=null;
@@ -310,7 +318,9 @@ let tm={onset:'',ct:'',needle:'',weight:''};
 const DEC0={basin:'',bside:'',dxExtra:'',dxEdit:null,asp:{mode:'num',val:'',reg:{}},r8auto:false,lvo:null,art:'',aside:'',lvoEdit:null,edema:null,decided:null,dept:'',deptT:'',other:'',docs:[{},{},{}]};
 let dec=JSON.parse(JSON.stringify(DEC0));
 let docNo=''; try{ docNo=localStorage.getItem('docno')||''; }catch(_){}
-let data,ts,cur,guss,gussDT,tlt,tltTime,tltDT,printSel,tab='nihss';
+let data,ts,cur,guss,gussDT,tlt,tltTime,tltDT,printSel,akt,tab='nihss';
+const AKT0={name:'',hist:'',vials:'',dose:'',stop:'',date:'',packs:[]};
+let aktZav='',aktNs=''; try{ aktZav=localStorage.getItem('akt_zav')||''; aktNs=localStorage.getItem('akt_ns')||''; }catch(_){}
 let meta={adm:'',admT:'',doc:'',year:''};
 let rec={id:null,author:null,created:null,readonly:false};
 try{ meta.doc=localStorage.getItem('doc')||''; }catch(e){}
@@ -319,7 +329,7 @@ function fresh(){
   data={};ts={};cur={};
   DYN.forEach(k=>{data[k]={};ts[k]={};cur[k]=0;});
   guss={p1:{},semi:{},liq:{},sol:{}}; gussDT=''; tm={onset:'',ct:'',needle:'',weight:''};
-  tlt={}; tltTime=null; tltDT='';
+  tlt={}; tltTime=null; tltDT=''; akt=JSON.parse(JSON.stringify(AKT0));
   printSel={}; meta.year=''; meta.admT=''; meta.adm=nowLocal().slice(0,10);
   rec={id:null,author:null,created:null,readonly:false}; lastSavedJSON=null; dec=JSON.parse(JSON.stringify(DEC0));
 }
@@ -574,10 +584,11 @@ function sheetTLT(){
   <div class="sign"><div>Лікар (черговий/лікуючий):<span>${esc(meta.doc)}</span></div><div>Підпис:<span></span></div></div></div>`;
   return h;
 }
-const SHEET_FN={dec:sheetDec,tlt:sheetTLT,nihss:sheetNIHSS,gcsmrs:sheetGCSmRS,four:sheetFOUR,guss:sheetGUSS};
+const SHEET_FN={akt:sheetAkt,dec:sheetDec,tlt:sheetTLT,nihss:sheetNIHSS,gcsmrs:sheetGCSmRS,four:sheetFOUR,guss:sheetGUSS};
 function sheetHasData(id){
   if(id==='dec') return dec.lvo!==null||dec.basin!==''||complete('nihss',0)||Object.keys(tlt).length>0;
   if(id==='tlt') return Object.keys(tlt).length>0||tltTime!==null;
+  if(id==='akt') return akt.packs.length>0||!!akt.hist||!!akt.dose;
   if(id==='guss') return gussState().any;
   if(id==='gcsmrs') return filled('gcs').length>0||filled('mrs').length>0;
   return filled(id).length>0;
@@ -663,6 +674,8 @@ function renderBar(){
     const g=gussState();
     $('bar').innerHTML=`<div class="score">${g.any?g.total:'—'}</div><div class="grow"><div style="font-weight:600">GUSS <span class="interp">/ 20</span></div><div class="interp">${g.done?gussInt(g.total)[2]:g.any?'Тест триває':'Почніть з частини 1'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return;
   }
+  if(tab==='akt'){ const a=aktCalc();
+    $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Акт · Актилізе</div><div class="interp">${a.dose!==null?`введено ${fmtN(a.dose)} мг; `:''}${a.vials?`флаконів ${a.vials}; `:''}${a.unused!==null?`залишок ${fmtN(a.unused)} мг`:'введіть масу тіла'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return; }
   if(tab==='tlt'){
     const s=tltState();
     $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">в/в ТЛТ</div><div class="interp">${s.txt}</div></div><button class="btn p" data-t="rep">Друк</button>`; return;
@@ -674,7 +687,7 @@ function renderBar(){
 function render(keepScroll){
   const y=window.scrollY, cx=$('cols')?$('cols').scrollLeft:0;
   renderTabs();
-  $('main').innerHTML= tab==='dec'?renderDec(): tab==='time'?renderTime(): tab==='pts'?renderPatients(): tab==='rep'?renderReport(): tab==='guss'?renderGuss(): tab==='tlt'?renderTlt(): renderDyn(tab);
+  $('main').innerHTML= tab==='dec'?renderDec(): tab==='time'?renderTime(): tab==='pts'?renderPatients(): tab==='rep'?renderReport(): tab==='guss'?renderGuss(): tab==='tlt'?renderTlt(): tab==='akt'?renderAkt(): renderDyn(tab);
   renderBar();
   if(tab==='rep') refreshReport();
   applyRO(); scheduleSave();
@@ -804,6 +817,163 @@ function renderAlteplase(){
     <div style="margin-top:4px">Інфузія 90%: <b>${a.inf} мг</b> протягом 60 хв (${a.inf} мг/год)</div>
     <div class="interp" style="margin-top:6px">При концентрації 1 мг/мл: болюс ${a.bolus} мл, інфузія ${a.inf} мл/год. Звіряйте з інструкцією до препарату.</div>`:'<div class="interp" style="margin-top:6px">Введіть масу тіла — доза розрахується автоматично.</div>'}
   </div>`;
+}
+/* ===== Зчитування серій Актилізе з фото упаковки (Tesseract, на пристрої) ===== */
+let ocrWorker=null;
+async function ocrInit(){
+  if(ocrWorker) return ocrWorker;
+  if(!window.Tesseract) await loadScript('lib/ocr/tesseract.min.js');
+  const base=new URL('lib/ocr/',location.href).href;
+  ocrWorker=await Tesseract.createWorker('eng',1,{workerPath:base+'worker.min.js',corePath:base,langPath:base,gzip:true,workerBlobURL:false});
+  await ocrWorker.setParameters({tessedit_char_whitelist:'0123456789 ',tessedit_pageseg_mode:'11'});
+  return ocrWorker;
+}
+/* фото → полотно: максимум каналів (прибирає червоний штамп і синю ручку), зменшення, поворот */
+async function ocrCanvas(file,rot,maxSide,mode){
+  const bmp=await createImageBitmap(file);
+  const k=Math.min(1,maxSide/Math.max(bmp.width,bmp.height));
+  const w=Math.round(bmp.width*k), h=Math.round(bmp.height*k);
+  const c=document.createElement('canvas'); const sw=rot%180!==0;
+  c.width=sw?h:w; c.height=sw?w:h;
+  const x=c.getContext('2d',{willReadFrequently:true});
+  x.translate(c.width/2,c.height/2); x.rotate(rot*Math.PI/180); x.drawImage(bmp,-w/2,-h/2,w,h);
+  const im=x.getImageData(0,0,c.width,c.height), d=im.data, n=d.length/4, hist=new Uint32Array(256);
+  for(let i=0;i<d.length;i+=4){ const m=Math.max(d[i],d[i+1],d[i+2]); d[i]=m; hist[m]++; }
+  let t=145;
+  if(mode===1){ let sum=0; for(let v=0;v<256;v++) sum+=v*hist[v]; let sB=0,wB=0,mx=0;
+    for(let v=0;v<256;v++){ wB+=hist[v]; if(!wB) continue; const wF=n-wB; if(!wF) break; sB+=v*hist[v]; const mB=sB/wB, mF=(sum-sB)/wF, bt=wB*wF*(mB-mF)*(mB-mF); if(bt>mx){ mx=bt; t=v; } } }
+  const lo=mode===1?t-20:120, hi=mode===1?t+20:170;
+  if(mode!==2) for(let i=0;i<d.length;i+=4){ const m=d[i], v=m<=lo?0:m>=hi?255:(m-lo)/(hi-lo)*255; d[i]=d[i+1]=d[i+2]=v; }
+  else for(let i=0;i<d.length;i+=4){ d[i+1]=d[i+2]=d[i]; }
+  x.putImageData(im,0,0);
+  return c;
+}
+/* розбір за розташуванням: 10 цифр — серія ліофілізату; 6 цифр рядком вище — комплект, рядком нижче — розчинник;
+   «ММ РРРР» у рядку комплекту — придатний до (інакше найпізніша дата) */
+function ocrParse(words){
+  const W=words.map(w=>({t:w.text.replace(/\D/g,''),x0:w.bbox.x0,x1:w.bbox.x1,y:(w.bbox.y0+w.bbox.y1)/2,h:w.bbox.y1-w.bbox.y0})).filter(w=>w.t);
+  const six=W.filter(w=>w.t.length===6), out=[];
+  const dateOn=(ref)=>{ const row=W.filter(w=>Math.abs(w.y-ref.y)<ref.h*0.8&&w.x0>ref.x1).sort((a,b)=>a.x0-b.x0);
+    for(let i=0;i<row.length-1;i++){ const m=+row[i].t; if(row[i].t.length<=2&&m>=1&&m<=12&&/^20\d\d$/.test(row[i+1].t)) return row[i+1].t+'-'+String(m).padStart(2,'0'); } return ''; };
+  W.filter(w=>w.t.length===10).forEach(l=>{
+    const near=six.filter(s=>Math.abs(s.x0-l.x0)<(l.x1-l.x0)*0.6&&Math.abs(s.y-l.y)<l.h*3.5);
+    const up=near.filter(s=>s.y<l.y-l.h*0.5).sort((a,b)=>b.y-a.y)[0], dn=near.filter(s=>s.y>l.y+l.h*0.5).sort((a,b)=>a.y-b.y)[0];
+    out.push({kit:up?up.t:'',lyo:l.t,sol:dn?dn.t:'',exp:up?dateOn(up):''});
+  });
+  const t=W.map(w=>w.t), dates=[]; for(let i=0;i<t.length-1;i++){ const m=+t[i]; if(t[i].length<=2&&m>=1&&m<=12&&/^20\d\d$/.test(t[i+1])) dates.push(t[i+1]+'-'+String(m).padStart(2,'0')); }
+  dates.sort(); out.forEach(p=>{ if(!p.exp&&dates.length) p.exp=dates[dates.length-1]; });
+  return out;
+}
+const ocrScore=r=>r.reduce((s,p)=>s+1+(p.kit?1:0)+(p.sol?1:0)+(p.exp?1:0),0);
+const ocrFull=r=>r.length&&r.every(p=>p.kit&&p.sol&&p.exp);
+async function ocrRead(file,onStep){
+  const w=await ocrInit(); let best=[];
+  for(const mode of [0,1,2]) for(const rot of [0,90,270,180]){
+    onStep&&onStep(rot,mode);
+    const c=await ocrCanvas(file,rot,1800,mode);
+    const {data}=await w.recognize(c);
+    const r=ocrParse(data.words||[]);
+    if(ocrScore(r)>ocrScore(best)) best=r;
+    if(ocrFull(r)) return {packs:r};
+  }
+  return {packs:best};
+}
+
+/* =================== 🧾 Акт знищення залишків Актилізе =================== */
+const AKT_VIAL=50;
+const fmtN=v=>String(Math.round(v*10)/10).replace('.',',');
+const pnum=v=>{ const x=parseFloat(String(v).replace(',','.')); return isNaN(x)?null:x; };
+function aktCalc(){
+  const al=alteplase(), dIn=pnum(akt.dose), dose= dIn!==null? dIn : al? al.total : null;
+  const vIn=parseInt(akt.vials,10);
+  const need= dose!==null? Math.ceil(dose/AKT_VIAL-1e-9) : 0;
+  const vials= vIn>0? vIn : Math.max(akt.packs.length,need)||null;
+  const unused= dose!==null&&vials? Math.max(0,Math.round((vials*AKT_VIAL-dose)*10)/10) : null;
+  return {al,dose,vials,unused};
+}
+function aktName(){ return akt.name || ptLabel(); }
+function aktDoseText(){
+  const a=aktCalc(); if(a.dose===null) return '';
+  let t=`Введено ${fmtN(a.dose)} мг альтеплази`;
+  if(a.al&&Math.abs(a.dose-a.al.total)<0.05) t+=` (0,9 мг/кг; болюс ${fmtN(a.al.bolus)} мг в/в струминно, інфузія ${fmtN(a.al.inf)} мг протягом 60 хв)`;
+  else if(a.al) t+=` (розрахункова доза ${fmtN(a.al.total)} мг)`;
+  t+=`; використано флаконів по ${AKT_VIAL} мг: ${a.vials}.`;
+  if(akt.stop.trim()) t+=' Введення припинено: '+akt.stop.trim();
+  return t;
+}
+function aktSeries(){
+  const g=[]; akt.packs.forEach(p=>{ if(!p.kit&&!p.lyo&&!p.sol) return; const k=[p.kit,p.lyo,p.sol].join('|'); const x=g.find(y=>y.k===k); if(x) x.n++; else g.push({k,p,n:1}); });
+  return g.map(({p,n})=>`${p.kit||'—'} (ліофілізат ${p.lyo||'—'}, розчинник ${p.sol||'—'})${n>1?` × ${n}`:''}`).join('; ');
+}
+function aktExp(){ return [...new Set(akt.packs.map(p=>p.exp).filter(Boolean))].map(e=>'до '+e).join(', '); }
+function renderAkt(){
+  const a=aktCalc(), app=!!window.AndroidBridge;
+  const fi=(lbl,attr,val,ph,extra)=>`<div class="fld" style="margin-top:8px"><label>${lbl}</label><input type="text" ${attr} value="${esc(val)}" placeholder="${esc(ph||'')}" ${extra||''}></div>`;
+  let h=`<div class="sec">Серії з упаковки Актилізе</div><div class="item">`;
+  h+= app? `<div class="interp">У застосунку камера поки недоступна (потрібна нова версія застосунку). Сфотографувати упаковку можна на сайті <b>stk92-ua.github.io/shkaly</b> у браузері телефона, або введіть номери вручну.</div>`
+    : `<div class="akbtn"><label class="btn p">📷 Сфотографувати упаковку<input type="file" accept="image/*" capture="environment" data-akfile hidden></label><label class="btn">🖼 Вибрати фото<input type="file" accept="image/*" data-akfile hidden></label></div>
+       <div class="interp" style="margin-top:6px">Фотографуйте бічну сторону з серіями рівно й близько; можна кілька коробок на одному фото. Номери зчитуються щоразу заново — перевірте їх.</div>`;
+  h+=`<div class="akst" id="akst"></div>`;
+  akt.packs.forEach((p,i)=>{
+    h+=`<div class="akpk"><div style="display:flex;justify-content:space-between;align-items:center"><b>Упаковка ${i+1}</b><button class="btn" style="padding:4px 10px;font-size:13px" data-akdel="${i}">Видалити</button></div><div class="g">
+      ${fi('Серія комплекту',`data-akp="${i}" data-akf="kit" inputmode="numeric"`,p.kit,'6 цифр')}
+      ${fi('Придатний до (ММ.РРРР)',`data-akp="${i}" data-akf="exp" inputmode="numeric"`,p.exp,'11.2028')}
+      ${fi('Серія ліофілізату',`data-akp="${i}" data-akf="lyo" inputmode="numeric"`,p.lyo,'10 цифр')}
+      ${fi('Серія розчинника',`data-akp="${i}" data-akf="sol" inputmode="numeric"`,p.sol,'6 цифр')}</div></div>`;
+  });
+  h+=`<button class="btn" style="margin-top:10px" data-akadd>＋ Додати упаковку вручну</button></div>`;
+  h+=`<div class="sec">Доза</div><div class="item">
+    ${fi('Маса тіла, кг','data-tm="weight" inputmode="decimal"',tm.weight,'напр. 78')}
+    ${fi('Фактично введена доза, мг','data-ak="dose" inputmode="decimal"',akt.dose,a.al?`${fmtN(a.al.total)} (розрахункова)`:'')}
+    ${fi('Кількість флаконів по 50 мг','data-ak="vials" inputmode="numeric"',akt.vials,a.vials?String(a.vials)+' (автоматично)':'')}
+    <div class="fld" style="margin-top:8px"><label>Причина припинення введення (за наявності)</label><textarea data-ak="stop" rows="2" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)">${esc(akt.stop)}</textarea></div>
+    <div style="margin-top:10px;font-size:15px">Невикористаний залишок: <b>${a.unused!==null?fmtN(a.unused)+' мг':'—'}</b></div>
+  </div>`;
+  h+=`<div class="sec">Пацієнт і комісія</div><div class="item">
+    ${fi('Пацієнт/ка (ПІБ)','data-ak="name"',akt.name,ptLabel()||'Прізвище Ім’я По батькові')}
+    ${fi('№ історії хвороби','data-ak="hist"',akt.hist,'')}
+    ${fi('Зав. інсультного відділення (запам’ятовується)','data-akz="zav"',aktZav,'')}
+    ${fi('Ст. медична сестра (запам’ятовується)','data-akz="ns"',aktNs,'')}
+    ${fi('Черговий лікар','data-m="doc"',meta.doc,'')}
+    <div class="fld" style="margin-top:8px"><label>Дата акту</label><input type="date" data-ak="date" value="${esc(akt.date||meta.adm)}"></div>
+  </div>
+  <p class="note">Акт друкується на вкладці «Друк» (бланк «Акт знищення залишків Актилізе»).</p>`;
+  return h;
+}
+function sheetAkt(){
+  const a=aktCalc(), f=(v,w)=>`<span class="fl" style="min-width:${w||120}px">${esc(v||'')}</span>`;
+  const yr=(akt.date||meta.adm||nowLocal()).slice(0,4);
+  const lines=(t,n)=>{ const words=t.split(' '), out=[]; let cur=''; words.forEach(w=>{ if((cur+' '+w).trim().length>95){ out.push(cur); cur=w; } else cur=(cur+' '+w).trim(); }); if(cur) out.push(cur); while(out.length<n) out.push(''); return out.map(l=>`<div class="ln">${esc(l)}</div>`).join(''); };
+  return `<div class="sheet akt">
+  <div style="text-align:right;font-weight:700;line-height:1.35;margin-bottom:70px">ЗАТВЕРДЖУЮ<br><i>Директор</i><br>КНП «Дубенська міська лікарня»<br>____________В.КРАСОВСЬКИЙ<br>«__»______________${yr}р</div>
+  <h1 style="font-size:17px;margin-bottom:22px">АКТ про знищення/утилізацію залишків лікарських засобів</h1>
+  <p>Комісією в складі зав.інсультного відділення ${f(aktZav,200)}, ст.медичної сестри інсультного відділення ${f(aktNs,200)}, чергового лікаря інсультного відділення ${f(meta.doc,200)}, було складено акт про знищення/утилізацію залишків використаного лікарського засобу Актилізе отриманого з відділу фармацевтичної служби та використаного на пацієнта/ку ${f(aktName(),300)},</p>
+  <p>№ історії хвороби ${f(akt.hist,160)} .</p>
+  <p style="margin-bottom:4px">Фактично використана та введена доза препарату з урахуванням ваги пацієнта/ки ${f(a.al?fmtN(a.al.w):'',60)} кг та можливих причин припинення введення ЛЗ (за наявності таких вказати):</p>
+  ${lines(aktDoseText(),4)}
+  <p style="margin-top:16px">Кількість невикористаного лікарського засобу Актилізе, який підлягає знищенню/утилізації ${f(a.unused!==null?fmtN(a.unused):'',70)} мг.</p>
+  <p>Серія ЛЗ ${f(aktSeries(),560)}</p>
+  <p>Дата: ${f(fmtD(akt.date||meta.adm),140)}</p>
+  <p>Термін дії: ${f(aktExp(),180)}</p>
+  <div style="margin-top:50px;line-height:2.6">Зав. інсультним відділенням: ${f(aktZav,200)} ${f('',120)}<br>Ст.медична сестра інсультного відділення: ${f(aktNs,200)} ${f('',120)}<br>Черговий лікар невролог інсультного відділення: ${f(meta.doc,180)} ${f('',110)}</div>
+  </div>`;
+}
+let ocrBusy=false;
+async function aktPhoto(file){
+  if(ocrBusy||!file) return; ocrBusy=true;
+  const st=()=>$('akst');
+  const say=t=>{ const e=st(); if(e) e.innerHTML=t; };
+  say('⏳ Розпізнаю серії… '+(ocrWorker?'':'(перший раз — завантаження модуля розпізнавання, ~7 МБ)'));
+  try{
+    const r=await ocrRead(file,(rot,mode)=>say(`⏳ Розпізнаю серії… (спроба ${mode*4+[0,90,270,180].indexOf(rot)+1})`));
+    const ps=r.packs.filter(p=>p.lyo||p.kit);
+    if(!ps.length){ say(''); toast('Не вдалося розпізнати — сфотографуйте ближче й рівніше або введіть вручну'); return; }
+    ps.forEach(p=>{ const [y,m]=(p.exp||'').split('-'); akt.packs.push({kit:p.kit||'',lyo:p.lyo||'',sol:p.sol||'',exp:p.exp?`${m}.${y}`:''}); });
+    render(true); scheduleSave();
+    const miss=ps.some(p=>!p.kit||!p.sol||!p.exp);
+    toast(`Зчитано упаковок: ${ps.length}${miss?' — частину полів не розпізнано, доповніть':''}`);
+  }catch(e){ say(''); toast('Помилка розпізнавання: '+(e&&e.message||e)); }
+  finally{ ocrBusy=false; }
 }
 /* =================== ⚠ NIHSS +4 =================== */
 function nihssAlert(c){
@@ -1037,7 +1207,7 @@ function summaryText(){
 function serialize(){
   const tsS={}; DYN.forEach(k=>{ tsS[k]={}; Object.entries(ts[k]).forEach(([c,v])=>{ if(v) tsS[k][c]=v; }); });
   const n=$('pt').value.trim();
-  return {name:n, nameLC:n.toLowerCase(), year:meta.year, adm:meta.adm, admT:meta.admT, tm, dec, doc:meta.doc, data, ts:tsS, guss, gussDT, tlt, tltTime, tltDT, summary:summaryText()};
+  return {name:n, nameLC:n.toLowerCase(), year:meta.year, adm:meta.adm, admT:meta.admT, tm, dec, doc:meta.doc, data, ts:tsS, guss, gussDT, tlt, tltTime, tltDT, akt, summary:summaryText()};
 }
 function canSave(){ return DB&&ME&&!rec.readonly&&$('pt').value.trim()&&/^\d{4}$/.test(meta.year); }
 function setSync(){
@@ -1085,6 +1255,7 @@ function loadInto(r){
     const f=filled(k); cur[k]=f.length?f[f.length-1]:0; });
   guss=Object.assign({p1:{},semi:{},liq:{},sol:{}},JSON.parse(JSON.stringify(r.guss||{})));
   gussDT=r.gussDT||gussDT; tlt=JSON.parse(JSON.stringify(r.tlt||{})); tltTime=(r.tltTime===undefined?null:r.tltTime); tltDT=r.tltDT||tltDT;
+  akt=Object.assign(JSON.parse(JSON.stringify(AKT0)),JSON.parse(JSON.stringify(r.akt||{})));
   rec={id:r.id,author:r.author,created:r.created||null,readonly:r.author!==ME};
   lastSavedJSON=JSON.stringify(serialize()); syncMsg='💾 Збережено на пристрої';
   if(!rec.readonly && r.doc) lastDoctorName=null;
@@ -1146,7 +1317,7 @@ function drawArchive(){
 function applyRO(){
   const ro=rec.readonly;
   ['pt','yr','adm','admTxt','admCal','admt'].forEach(id=>{ const el=$(id); if(el) el.disabled=ro; });
-  document.querySelectorAll('[data-m],[data-gdt],[data-tdt],[data-cdt],[data-tm],[data-ddx],[data-dlvo],[data-ddept],[data-dother],[data-daspv],[data-dasr]').forEach(el=>{ if(el.dataset.m!=='doc'||ro) el.disabled=ro; });
+  document.querySelectorAll('[data-m],[data-gdt],[data-tdt],[data-cdt],[data-tm],[data-ddx],[data-dlvo],[data-ddept],[data-dother],[data-daspv],[data-dasr],[data-ak],[data-akp]').forEach(el=>{ if(el.dataset.m!=='doc'||ro) el.disabled=ro; });
   setSync();
   if(tab==='pts') drawArchive();
 }
@@ -1238,6 +1409,10 @@ document.addEventListener('click',e=>{
   const gf=e.target.closest('[data-gfill]');
   if(gf){ const v=gf.dataset.gfill; gussFill(v==='all'?['p1','semi','liq','sol']:[v]); render(true); toast(v==='all'?'GUSS: 20 балів':'Етап заповнено'); return; }
   if(e.target.closest('[data-gclear]')){ guss={p1:{},semi:{},liq:{},sol:{}}; render(); window.scrollTo(0,0); return; }
+  const akd=e.target.closest('[data-akdel],[data-akadd]');
+  if(akd){ if(rec.readonly){ toast('Запис колеги — лише перегляд'); return; }
+    if(akd.dataset.akdel!==undefined) akt.packs.splice(+akd.dataset.akdel,1); else akt.packs.push({kit:'',lyo:'',sol:'',exp:''});
+    render(true); scheduleSave(); return; }
   const tl=e.target.closest('[data-tl]');
   if(tl){ const id=tl.dataset.tl,v=tl.dataset.tv; if(tlt[id]===v) delete tlt[id]; else tlt[id]=v; render(true); return; }
   const tt=e.target.closest('[data-tt]');
@@ -1284,12 +1459,20 @@ document.addEventListener('input',e=>{
     if(D.ddocno!==undefined){ docNo=e.target.value; try{ localStorage.setItem('docno',docNo); }catch(_){} }
     if(D.daspv!==undefined){ dec.asp.val=e.target.value.replace(/\D/g,'').slice(0,2); syncAsp(); }
     renderBar(); scheduleSave(); } }
+  { const D=e.target.dataset;
+    if(D.akz){ if(D.akz==='zav') aktZav=e.target.value; else aktNs=e.target.value; try{ localStorage.setItem('akt_'+D.akz,e.target.value); }catch(_){} renderBar(); }
+    if(D.ak||D.akp!==undefined){ if(rec.readonly){ render(true); return; }
+      if(D.ak) akt[D.ak]=e.target.value;
+      else { let v=e.target.value; if(D.akf==='exp'){ v=v.replace(/[^\d]/g,'').slice(0,6); v=v.length>2?v.slice(0,2)+'.'+v.slice(2):v; if(v!==e.target.value) e.target.value=v; } else v=v.replace(/\s/g,''); akt.packs[+D.akp][D.akf]=v; }
+      renderBar(); scheduleSave(); } }
   if(e.target.dataset.tm){ if(rec.readonly){ e.target.value=tm[e.target.dataset.tm]||''; return; } tm[e.target.dataset.tm]=e.target.value; scheduleSave(); }
   if(e.target.dataset.gdt!==undefined) gussDT=e.target.value;
   if(e.target.dataset.tdt!==undefined) tltDT=e.target.value;
   if(m||e.target.dataset.gdt!==undefined||e.target.dataset.tdt!==undefined) scheduleSave();
 });
 document.addEventListener('change',e=>{
+  if(e.target.dataset.akfile!==undefined){ const f=e.target.files&&e.target.files[0]; e.target.value=''; if(rec.readonly){ toast('Запис колеги — лише перегляд'); return; } aktPhoto(f); return; }
+  if(e.target.dataset.ak==='dose'||e.target.dataset.ak==='vials'||(tab==='akt'&&e.target.dataset.tm)){ render(true); }
   if(e.target.id==='admTxt'){ if(e.target.value!==fmtD(meta.adm)){ if(e.target.value.trim()) toast('Дата має бути у форматі ДД.ММ.РРРР'); admShow(); } return; }
   if(e.target.dataset.dasr){ if(rec.readonly){ e.target.checked=!e.target.checked; return; } dec.asp.reg[e.target.dataset.dasr]=e.target.checked; syncAsp(); render(true); scheduleSave(); return; }
   if(e.target.dataset.daspv!==undefined){ render(true); return; }
@@ -1303,8 +1486,8 @@ render();
 </script>
 <script>
 // Повідомлення про оновлення. APP_VER змінювати при кожному оновленні разом із web-version.json
-const APP_VER='2026.11.18.4';
-const APP_NOTES=['Кнопка «Оновити й перезавантажити» тепер одразу перезавантажує застосунок','Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
+const APP_VER='2026.11.18.5';
+const APP_NOTES=['Нова вкладка «🧾 Акт»: акт знищення залишків Актилізе з автоматичним заповненням і зчитуванням серій з фото упаковки (на сайті в браузері)','Кнопка «Оновити й перезавантажити» тепер одразу перезавантажує застосунок','Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
 (function(){
   const isApp=!!window.AndroidBridge;
   const cmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
