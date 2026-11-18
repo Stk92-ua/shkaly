@@ -139,7 +139,7 @@ main{padding:12px 12px 4px;max-width:820px;margin:0 auto}
   <nav class="tabs" id="tabs"></nav>
 </header>
 <main id="main"></main>
-<footer class="donate">☕ Застосунок безкоштовний. Якщо він вам допомагає — можна пригостити автора кавою<br><a href="https://www.privat24.ua/send/kr8h4" target="_blank" rel="noopener">Конверт Приват24</a><div class="verline">Версія <span id="appver"></span><br><button class="btn" id="updbtn">⟳ Оновити й перезавантажити</button></div></footer>
+<footer class="donate">☕ Застосунок безкоштовний. Якщо він вам допомагає — можна пригостити автора кавою<br><a href="https://www.privat24.ua/send/kr8h4" target="_blank" rel="noopener">Конверт Приват24</a><div class="verline">Версія <span id="appver"></span></div></footer>
 <div class="bar"><div class="in" id="bar"></div></div>
 <div class="toast" id="toast"></div>
 <div id="offscreen" style="position:fixed;left:-20000px;top:0"></div>
@@ -1303,8 +1303,8 @@ render();
 </script>
 <script>
 // Повідомлення про оновлення. APP_VER змінювати при кожному оновленні разом із web-version.json
-const APP_VER='2026.11.18.2';
-const APP_NOTES=['Кнопка «Оновити й перезавантажити» внизу сторінки','Повідомлення про нові версії з інструкцією, як оновитись','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
+const APP_VER='2026.11.18.3';
+const APP_NOTES=['Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
 (function(){
   const isApp=!!window.AndroidBridge;
   const cmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
@@ -1327,8 +1327,6 @@ const APP_NOTES=['Кнопка «Оновити й перезавантажит�
   // 2) Чи є новіша версія на сайті
   const URL_V='https://stk92-ua.github.io/shkaly/web-version.json';
   let last=0, skipped='';
-  const HOW_APP='<b>Якщо після перезавантаження версія не змінилась:</b><ol><li>Закрийте застосунок повністю — змахніть його з переліку недавніх програм (кнопка ▢ або жест знизу вгору).</li><li>Відкрийте застосунок знову.</li><li>Якщо не з\'явилась — зачекайте 10 хв і повторіть (потрібен інтернет).</li></ol>Збережені пацієнти не зникнуть.';
-  const HOW_WEB='<b>Як оновити:</b> натисніть «Оновити й перезавантажити». Якщо нова версія не з\'явилась — зачекайте 10 хв і повторіть. Збережені пацієнти не зникнуть.';
   async function getRemote(){
     const r=await fetch(URL_V+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw 0; return r.json();
   }
@@ -1347,14 +1345,14 @@ const APP_NOTES=['Кнопка «Оновити й перезавантажит�
     await loadArchive(); await openRecord(o.k); if(o.tab){ tab=o.tab; render(); } }catch(_){} })(); }
   // Після спроби оновлення: чи вдалося
   const tried=ls.get('updTry');
-  if(tried){ ls.set('updTry',''); if(cmp(tried,APP_VER)>0) setTimeout(()=>show('Оновлення ще не застосувалось',tried,null,isApp?HOW_APP:HOW_WEB,[{t:'Зрозуміло',p:1,f:()=>{skipped=tried;}}]),500); }
+  if(tried) ls.set('updTry','');
   async function check(manual){
     if(!manual&&Date.now()-last<20*60*1000) return; last=Date.now();
     let j; try{ j=await getRemote(); }catch(_){ if(manual) toast('Немає зв\'язку з сайтом — перевірте інтернет'); return; }
     if(!j||!j.v||cmp(j.v,APP_VER)<=0){ if(manual){ toast('У вас найновіша версія — перезавантажую…'); setTimeout(()=>reloadApp(''),900); } return; }
-    if(!manual&&(skipped===j.v||tried===j.v)) return;
+    if(!manual&&skipped===j.v) return;
     if(document.getElementById('upd')) return;
-    show('Доступне оновлення',j.v,j.notes,isApp?HOW_APP:HOW_WEB,
+    show('Доступне оновлення',j.v,j.notes,'',
       [{t:'Пізніше',f:()=>{skipped=j.v;}},{t:'Оновити й перезавантажити',p:1,f:()=>reloadApp(j.v)}]);
   }
   const vb=document.getElementById('updbtn'), vs=document.getElementById('appver');
