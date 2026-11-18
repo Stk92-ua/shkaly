@@ -79,6 +79,12 @@ main{padding:12px 12px 4px;max-width:820px;margin:0 auto}
 .note{font-size:13px;color:var(--muted);margin:10px 2px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
 .toast.show{opacity:1}
+.upd{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.upd .box{background:var(--card);color:var(--ink);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:16px 16px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.25);max-height:85vh;overflow:auto}
+.upd h3{margin:0 0 6px;font-size:18px}.upd .v{color:var(--muted);font-size:13px;margin-bottom:10px}
+.upd ul,.upd ol{margin:6px 0 12px;padding-left:20px}.upd li{margin:3px 0}
+.upd .hw{background:var(--accent-soft);border-radius:10px;padding:8px 12px;font-size:14px;margin-bottom:12px}
+.upd .bt{display:flex;gap:8px}.upd .bt .btn{flex:1}
 .sec{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:18px 2px 8px}
 .verdict{border-radius:12px;padding:12px;margin-bottom:10px;font-weight:600;border:1px solid var(--line);background:var(--card)}
 .verdict.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
@@ -1293,6 +1299,51 @@ document.addEventListener('change',e=>{
 window.addEventListener('resize',fitPreview);
 $('adm').value=meta.adm; admShow();
 render();
+</script>
+<script>
+// Повідомлення про оновлення. APP_VER змінювати при кожному оновленні разом із web-version.json
+const APP_VER='2026.11.18.1';
+const APP_NOTES=['Повідомлення про нові версії з інструкцією, як оновитись','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
+(function(){
+  const isApp=!!window.AndroidBridge;
+  const cmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ls={get:k=>{try{return localStorage.getItem(k);}catch(_){return null;}},set:(k,v)=>{try{localStorage.setItem(k,v);}catch(_){}}};
+  function show(title,ver,notes,how,btns){
+    const old=document.getElementById('upd'); if(old) old.remove();
+    const d=document.createElement('div'); d.className='upd'; d.id='upd';
+    d.innerHTML=`<div class="box"><h3>${esc(title)}</h3><div class="v">Версія ${esc(ver)}</div>`+
+      (notes&&notes.length?`<b>Що нового:</b><ul>${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:'')+
+      (how?`<div class="hw">${how}</div>`:'')+
+      `<div class="bt">${btns.map((b,i)=>`<button class="btn${b.p?' p':''}" data-ub="${i}">${esc(b.t)}</button>`).join('')}</div></div>`;
+    d.addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.ub; if(i!==undefined){btns[i].f&&btns[i].f(); d.remove();} else if(e.target===d) d.remove();});
+    document.body.appendChild(d);
+  }
+  // 1) Після оновлення — що змінилося
+  const seen=ls.get('seenVer');
+  if(seen&&cmp(seen,APP_VER)<0) show('Застосунок оновлено',APP_VER,APP_NOTES,'',[{t:'Зрозуміло',p:1,f:()=>ls.set('seenVer',APP_VER)}]);
+  else if(!seen) ls.set('seenVer',APP_VER);
+  // 2) Чи є новіша версія на сайті
+  const URL_V='https://stk92-ua.github.io/shkaly/web-version.json';
+  let last=0, skipped='';
+  async function check(){
+    if(Date.now()-last<20*60*1000) return; last=Date.now();
+    try{
+      const r=await fetch(URL_V+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
+      const j=await r.json(); if(!j||!j.v||cmp(j.v,APP_VER)<=0||skipped===j.v) return;
+      if(document.getElementById('upd')) return;
+      const how=isApp
+        ? '<b>Як оновити:</b><ol><li>Закрийте застосунок повністю — змахніть його з переліку недавніх програм (кнопка ▢ або жест знизу вгору).</li><li>Відкрийте застосунок знову — з\'явиться нова версія.</li><li>Якщо не з\'явилась — зачекайте 10 хв і повторіть (потрібен інтернет).</li></ol>Збережені пацієнти не зникнуть.'
+        : '<b>Як оновити:</b> натисніть «Оновити зараз». Якщо нова версія не з\'явилась — зачекайте 10 хв і оновіть сторінку ще раз. Збережені пацієнти не зникнуть.';
+      const btns=isApp
+        ? [{t:'Зрозуміло',p:1,f:()=>{skipped=j.v;}}]
+        : [{t:'Пізніше',f:()=>{skipped=j.v;}},{t:'Оновити зараз',p:1,f:()=>location.reload()}];
+      show('Доступне оновлення',j.v,j.notes,how,btns);
+    }catch(_){}
+  }
+  setTimeout(check,3000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) check(); });
+})();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
 </body>
