@@ -1303,8 +1303,8 @@ render();
 </script>
 <script>
 // Повідомлення про оновлення. APP_VER змінювати при кожному оновленні разом із web-version.json
-const APP_VER='2026.11.18.3';
-const APP_NOTES=['Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
+const APP_VER='2026.11.18.4';
+const APP_NOTES=['Кнопка «Оновити й перезавантажити» тепер одразу перезавантажує застосунок','Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
 (function(){
   const isApp=!!window.AndroidBridge;
   const cmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
@@ -1330,12 +1330,15 @@ const APP_NOTES=['Повідомлення про нову версію з ви�
   async function getRemote(){
     const r=await fetch(URL_V+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw 0; return r.json();
   }
-  async function reloadApp(target){
-    try{ if(typeof saveNow==='function') await Promise.race([saveNow(),new Promise(r=>setTimeout(r,3000))]); }catch(_){}
-    if(target) ls.set('updTry',target);
+  const tmo=(pr,ms)=>Promise.race([pr,new Promise(r=>setTimeout(r,ms))]);
+  async function reloadApp(target,n){
+    toast(n?'Завантажую оновлення…':'Перезавантажую…');
+    try{ if(typeof saveNow==='function') await tmo(saveNow(),3000); }catch(_){}
+    if(target) ls.set('updTry',JSON.stringify({v:target,n:n||0}));
     try{ if(rec&&rec.id) ls.set('reopen',JSON.stringify({k:rec.author+'/'+rec.id,tab})); }catch(_){}
-    try{ if(navigator.serviceWorker){ const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.update().catch(()=>{}))); } }catch(_){}
+    if(!isApp){ try{ if(navigator.serviceWorker) await tmo(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update().catch(()=>{})))),2000); }catch(_){} }
     location.reload();
+    setTimeout(()=>{ try{ location.href=location.href.split('#')[0]; }catch(_){} },1500);
   }
   window.reloadApp=reloadApp;
   // Після перезавантаження — повернути відкритого пацієнта і вкладку
@@ -1344,8 +1347,12 @@ const APP_NOTES=['Повідомлення про нову версію з ви�
     for(let i=0;i<50&&!dbTried;i++) await new Promise(r=>setTimeout(r,100));
     await loadArchive(); await openRecord(o.k); if(o.tab){ tab=o.tab; render(); } }catch(_){} })(); }
   // Після спроби оновлення: чи вдалося
-  const tried=ls.get('updTry');
-  if(tried) ls.set('updTry','');
+  let tried=''; try{ const t=JSON.parse(ls.get('updTry')||'null'); ls.set('updTry','');
+    if(t&&t.v&&cmp(t.v,APP_VER)>0){ tried=t.v; skipped=t.v;
+      // застосунок міг ще не встигнути завантажити нову версію — ще одна спроба
+      if((t.n||0)<2) setTimeout(()=>reloadApp(t.v,(t.n||0)+1),4000);
+      else setTimeout(()=>toast('Оновлення застосується при наступному запуску застосунку'),800);
+    } }catch(_){ ls.set('updTry',''); }
   async function check(manual){
     if(!manual&&Date.now()-last<20*60*1000) return; last=Date.now();
     let j; try{ j=await getRemote(); }catch(_){ if(manual) toast('Немає зв\'язку з сайтом — перевірте інтернет'); return; }
