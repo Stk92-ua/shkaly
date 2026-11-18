@@ -620,7 +620,8 @@ function renderReport(){
     <a class="btn" id="vb">Viber</a>
     <a class="btn" id="wa" target="_blank" rel="noopener">WhatsApp</a>
   </div>
-  <p class="note">Прізвище, ініціали, рік народження та бали автоматично зберігаються лише на цьому пристрої, у цьому браузері (вкладка «📁 Пацієнти»). Колеги їх не бачать; при очищенні даних браузера записи зникнуть.</p>`;
+  <p class="note">Прізвище, ініціали, рік народження та бали автоматично зберігаються лише на цьому пристрої, у цьому браузері (вкладка «📁 Пацієнти»). Колеги їх не бачать; при очищенні даних браузера записи зникнуть.</p>
+  <p class="note" style="text-align:center;opacity:.7">Версія 18.11.2026 13:35</p>`;
 }
 function refreshReport(){
   const p=$('pvs');
@@ -644,7 +645,7 @@ function fitPreview(){
 
 /* --- нижня панель --- */
 function renderBar(){
-  if(tab==='dec'){ const d=decisions(); $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Рішення: ${DECS.filter(([k])=>d[k]).map(([,t])=>t).join(', ')||'—'}</div><div class="interp">${dec.decided?'обрано лікарем':'за підказкою (можна змінити)'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return; }
+  if(tab==='dec'){ const d=decisions(); $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Рішення: ${decList().filter(([k])=>d[k]).map(([,t])=>t).join(', ')||'—'}</div><div class="interp">${(dec.decided&&decisions()===dec.decided)?'обрано лікарем':'за підказкою (можна змінити)'}</div></div><button class="btn p" data-t="rep">Друк</button>`; return; }
   if(tab==='time'){ const t=timeStats(); $('bar').innerHTML=`<div class="grow"><div style="font-weight:600">Двері → голка: ${hm(t.d2n)}</div><div class="interp">Двері → КТ: ${hm(t.d2ct)}</div></div><button class="btn p" data-t="tlt">ТЛТ →</button>`; return; }
   if(tab==='pts'){
     $('bar').innerHTML=`<div class="grow interp">${$('pt').value.trim()?'Відкрито: '+esc(ptLabel()):'Пацієнта не обрано'}</div><button class="btn p" id="reset2">＋ Новий пацієнт</button>`; return;
@@ -810,6 +811,8 @@ function nihssAlert(c){
 const ASPR=[['C','Голівка хвостатого ядра (C)'],['L','Лентикулярне ядро (L)'],['IC','Внутрішня капсула (IC)'],['I','Острівцева кора (I)'],['M1','M1'],['M2','M2'],['M3','M3'],['M4','M4'],['M5','M5'],['M6','M6']];
 const ARTS=[['ВСА','ВСА'],['СМА-M1','СМА, сегмент M1'],['СМА-M2','СМА, сегмент M2'],['СМА-M3','СМА, сегмент M3'],['ПМА','ПМА'],['ЗМА','ЗМА'],['ХА','Хребтова артерія'],['ОА','Основна (базилярна) артерія']];
 const BASINS=['СМА','ПМА','ЗМА','ВББ'];
+const DECH=['hem','Базисна терапія при ГМІ за геморагічним типом'];
+function decList(){ return [...DECS,DECH]; }
 const DECS=[['tlt','В/в тромболізис'],['basic','Базисна терапія при ішемічному інсульті'],['evt','Тромбектомія'],['dhc','Декомпресивна гемікраніектомія']];
 function aspScore(){ if(dec.asp.mode==='calc') return 10-ASPR.filter(([k])=>dec.asp.reg[k]).length; const v=parseInt(dec.asp.val,10); return isNaN(v)?null:Math.max(0,Math.min(10,v)); }
 function ich(){ return tlt.a1==='y'?true: tlt.a1==='n'?false:null; }
@@ -848,11 +851,14 @@ function suggest(){
   }
   const a=aspScore(); if(a!==null&&a<6) R.push(['warn',`ASPECTS ${a} (<6) — відносний протипоказ до вТЛТ (ранні ознаки великого інфаркту)`]);
   if(dec.edema===true) R.push(['warn','Набряк зі зміщенням ≥5 мм — розглянути декомпресивну гемікраніектомію, консультація нейрохірурга']);
+  if(I===true) R.push(['warn','Крововилив на КТ — базисна терапія при ГМІ за геморагічним типом']);
   return {R,tltOk:tltOk&&!s.relY,evtOk,dhc:dec.edema===true,ich:I===true};
 }
 function decisions(){
-  if(dec.decided) return dec.decided;
-  const g=suggest(); return {tlt:g.tltOk, evt:g.evtOk, dhc:g.dhc, basic:!g.tltOk&&!g.evtOk&&!g.ich};
+  /* ручний вибір стає неактуальним, якщо після нього змінилася позначка крововиливу */
+  const stale= dec.decided && (dec.decidedIch===undefined ? ich()===true : dec.decidedIch!==ich());
+  if(dec.decided&&!stale) return dec.decided;
+  const g=suggest(); return {tlt:g.tltOk&&!g.ich, evt:g.evtOk&&!g.ich, dhc:g.dhc, hem:g.ich, basic:!g.tltOk&&!g.evtOk&&!g.ich};
 }
 function gcsFirst2(){ const f=filled('gcs').filter(c=>complete('gcs',c)); return f.length? total('gcs',f[0]) : null; }
 function deptAuto(){ if(dec.dept) return dec.dept; const g=gcsFirst2(); return g!==null&&g<12? 'анестезіології та інтенсивної терапії' : 'інсультне'; }
@@ -887,9 +893,9 @@ function renderDec(){
     <div class="fld" style="margin-top:8px"><label>Опис (автоматично, можна редагувати)</label><input type="text" data-dlvo value="${esc(lvoText())}"></div>`:''}
   </div>
   <div class="sec">6. Набряк мозку зі зміщенням серединних структур ≥5 мм</div><div class="item">${yn('edema',dec.edema)}</div>
-  <div class="sec">Клінічне рішення ${dec.decided?'':'<span style="text-transform:none;font-weight:400">(за підказкою — торкніться, щоб змінити)</span>'}</div><div class="item">`+
-    DECS.map(([k,t])=>`<button class="opt ${d[k]?'on':''}" data-ddec="${k}"><span class="n">${d[k]?'✓':''}</span><span>${t}</span></button>`).join('')+
-    (dec.decided?'<button class="btn" style="margin-top:8px;padding:5px 10px;font-size:13px" data-ddecreset>↺ Повернути підказку</button>':'')+`</div>
+  <div class="sec">Клінічне рішення ${decisions()===dec.decided?'':'<span style="text-transform:none;font-weight:400">(за підказкою — торкніться, щоб змінити)</span>'}</div><div class="item">`+
+    decList().map(([k,t])=>`<button class="opt ${d[k]?'on':''}" data-ddec="${k}"><span class="n">${d[k]?'✓':''}</span><span>${t}</span></button>`).join('')+
+    (dec.decided&&decisions()===dec.decided?'<button class="btn" style="margin-top:8px;padding:5px 10px;font-size:13px" data-ddecreset>↺ Повернути підказку</button>':'')+`</div>
   <div class="sec">Госпіталізація</div><div class="item">
     <div class="fld"><label>Відділення (автоматично за ШКГ)</label><input type="text" data-ddept value="${esc(deptAuto())}"></div>
     <div class="note">Час: <b>${meta.admT||'— (вкажіть угорі)'}</b></div>
@@ -921,7 +927,7 @@ function sheetDec(){
   ${line('')}
   <div style="margin-top:14px;font-weight:700;font-size:14px">Клінічне рішення</div>
   <table style="margin-top:4px"><tr>${DECS.slice(0,2).map(([k,t])=>`<td style="padding:6px 8px;width:50%"><span class="box" style="font-size:15px">${bx(d[k])}</span> ${t}</td>`).join('')}</tr>
-  <tr>${DECS.slice(2).map(([k,t])=>`<td style="padding:6px 8px"><span class="box" style="font-size:15px">${bx(d[k])}</span> ${t}</td>`).join('')}</tr></table>
+  <tr>${DECS.slice(2).map(([k,t])=>`<td style="padding:6px 8px"><span class="box" style="font-size:15px">${bx(d[k])}</span> ${t}</td>`).join('')}</tr>${I===true||d.hem?`<tr><td colspan="2" style="padding:6px 8px"><span class="box" style="font-size:15px">${bx(d.hem)}</span> ${DECH[1]}</td></tr>`:''}</table>
   <div style="margin-top:12px;font-size:13px"><b>Госпіталізація пацієнта у відділення</b> <span style="display:inline-block;min-width:220px;border-bottom:1px solid #000">${esc(dec.other?'':deptAuto())}</span>
    <b>Час</b> <span style="display:inline-block;min-width:40px;border-bottom:1px solid #000;text-align:center">${dec.other?'':esc((meta.admT||'').split(':')[0]||'')}</span> год. <span style="display:inline-block;min-width:40px;border-bottom:1px solid #000;text-align:center">${dec.other?'':esc((meta.admT||'').split(':')[1]||'')}</span> хв.</div>
   <div style="margin-top:8px;font-size:13px"><b>Або направлений на лікування до іншого закладу ОЗ</b> <span style="display:inline-block;min-width:260px;border-bottom:1px solid #000">${esc(dec.other)}</span></div>
@@ -1218,8 +1224,8 @@ document.addEventListener('click',e=>{
     else if(D.dasp){ dec.asp.mode=D.dasp; syncAsp(); }
     else if(D.dart){ dec.art= dec.art===D.dart?'':D.dart; dec.lvoEdit=null; dec.dxEdit=null; }
     else if(D.daside){ dec.aside= dec.aside===D.daside?'':D.daside; dec.lvoEdit=null; dec.dxEdit=null; }
-    else if(D.ddec){ const d=Object.assign({},decisions()); d[D.ddec]=!d[D.ddec]; dec.decided=d; }
-    else if(D.ddecreset!==undefined){ dec.decided=null; }
+    else if(D.ddec){ const d=Object.assign({},decisions()); d[D.ddec]=!d[D.ddec]; dec.decided=d; dec.decidedIch=ich(); }
+    else if(D.ddecreset!==undefined){ dec.decided=null; delete dec.decidedIch; }
     else if(D.ddxreset!==undefined){ dec.dxEdit=null; }
     render(true); scheduleSave(); return;
   }
