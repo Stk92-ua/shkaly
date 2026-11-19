@@ -907,7 +907,7 @@ function aktSeries(){
 }
 function aktExp(){ return [...new Set(akt.packs.map(p=>p.exp).filter(Boolean))].map(e=>'до '+e).join(', '); }
 function renderAkt(){
-  const a=aktCalc(), app=!!window.AndroidBridge;
+  const a=aktCalc(), app=!!window.AndroidBridge&&!window.AndroidBridge.canPickPhoto; // застосунок 1.5+ уміє фотографувати
   const fi=(lbl,attr,val,ph,extra)=>`<div class="fld" style="margin-top:8px"><label>${lbl}</label><input type="text" ${attr} value="${esc(val)}" placeholder="${esc(ph||'')}" ${extra||''}></div>`;
   let h=`<div class="sec">Серії з упаковки Актилізе</div><div class="item">`;
   h+= app? `<div class="interp">У застосунку камера поки недоступна (потрібна нова версія застосунку). Сфотографувати упаковку можна на сайті <b>stk92-ua.github.io/shkaly</b> у браузері телефона, або введіть номери вручну.</div>`
@@ -1486,8 +1486,8 @@ render();
 </script>
 <script>
 // Повідомлення про оновлення. APP_VER змінювати при кожному оновленні разом із web-version.json
-const APP_VER='2026.11.18.5';
-const APP_NOTES=['Нова вкладка «🧾 Акт»: акт знищення залишків Актилізе з автоматичним заповненням і зчитуванням серій з фото упаковки (на сайті в браузері)','Кнопка «Оновити й перезавантажити» тепер одразу перезавантажує застосунок','Повідомлення про нову версію з вибором: «Оновити й перезавантажити» або «Пізніше»','Рішення: графа «Базисна терапія при ГМІ за геморагічним типом» при позначці крововиливу','Рішення автоматично перераховується після зміни позначки крововиливу'];
+const APP_VER='2026.11.19.1';
+const APP_NOTES=['«🧾 Акт»: фото упаковки й зчитування серій тепер працюють і в Android-застосунку (версія 1.5)', 'Android-застосунок 1.5: кнопка «Оновити й перезавантажити» одразу завантажує нову версію'];
 (function(){
   const isApp=!!window.AndroidBridge;
   const cmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
